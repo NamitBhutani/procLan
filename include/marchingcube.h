@@ -3,6 +3,7 @@
 #include <vector>
 #include "FastNoiseLite.h"
 #include <glm/glm.hpp>
+#include "include/camera.h"
 
 class MarchingCubes
 {
@@ -29,7 +30,7 @@ public:
     MarchingCubes();
     ~MarchingCubes();
     void initialize();
-    void render();
+    void render(Camera camera);
     void debugComputeShaderOutput();
     void resetVertexCounter();
 };

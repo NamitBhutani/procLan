@@ -21,7 +21,7 @@ layout(std430, binding = 4) buffer CounterBuffer {
 uint vertexCounter;
 };
 
-const float isoLevel = 0.1;
+const float isoLevel = 0.34;
 
 int index3D(int x, int y, int z, int gridSize) {
 return x + y * gridSize + z * gridSize * gridSize;
