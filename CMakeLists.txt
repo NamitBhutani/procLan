@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(OpenGLProject)
+project(marchingcubes)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -21,14 +21,14 @@ target_include_directories(glad PRIVATE
 
 # Collect all source files
 set(SOURCE_FILES
-    main.cpp
     edgetable.cpp
     tritable.cpp
-    marchingcube.h)
+    marchingcube.cpp
+    main.cpp)
 
-# Collect all shader files
-set(SHADER_FILES
-    shaders/marchingCube.comp.glsl)
+# Collect all shader files using GLOB
+file(GLOB SHADER_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*")
 
 # Add executable
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
