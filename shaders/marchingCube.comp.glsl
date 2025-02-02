@@ -21,7 +21,7 @@ layout(std430, binding = 4) buffer CounterBuffer {
 uint vertexCounter;
 };
 
-const float isoLevel = 0.34;
+const float isoLevel = 0.0;
 
 int index3D(int x, int y, int z, int gridSize) {
 return x + y * gridSize + z * gridSize * gridSize;
@@ -54,7 +54,7 @@ int cubeIndex = 0;
 for(int i = 0;
 i < 8;
 i ++) {
-if(cubeVertices[i] > isoLevel) {
+if(cubeVertices[i] < isoLevel) {
 cubeIndex |= (1 << i);
 }
 }

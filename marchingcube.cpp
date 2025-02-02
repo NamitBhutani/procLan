@@ -50,11 +50,39 @@ std::vector<float> MarchingCubes::generateDensityField()
     cout << "density field set";
     return densityField;
 }
+std::vector<float> MarchingCubes::generateSphereDensityField()
+{
+    std::vector<float> densityField(GRID_SIZE * GRID_SIZE * GRID_SIZE);
 
+    // Define sphere parameters
+    glm::vec3 center(GRID_SIZE / 2.0f, GRID_SIZE / 2.0f, GRID_SIZE / 2.0f);
+    float radius = GRID_SIZE / 4.0f; // This will make the sphere take up half the grid
+
+    for (int z = 0; z < GRID_SIZE; ++z)
+    {
+        for (int y = 0; y < GRID_SIZE; ++y)
+        {
+            for (int x = 0; x < GRID_SIZE; ++x)
+            {
+                int index = x + y * GRID_SIZE + z * GRID_SIZE * GRID_SIZE;
+
+                // Calculate distance from current point to sphere center
+                glm::vec3 pos(x, y, z);
+                float distance = glm::length(pos - center) - radius;
+
+                // The density is the signed distance field:
+                // Negative inside the sphere, positive outside
+                densityField[index] = distance;
+            }
+        }
+    }
+
+    return densityField;
+}
 void MarchingCubes::createDensitySSBO()
 {
     cout << "Creating density SSBO..." << endl;
-    std::vector<float> densityField = generateDensityField();
+    std::vector<float> densityField = generateSphereDensityField();
     cout << "densityField" << endl;
     glGenBuffers(1, &densitySSBO);
     cout << "buffers bound";
@@ -143,7 +171,7 @@ void MarchingCubes::render(Camera camera)
 {
 
     glUseProgram(computeShader);
-    glDispatchCompute((GRID_SIZE + 7) / 8, (GRID_SIZE + 7) / 8, (GRID_SIZE + 7) / 8);
+    glDispatchCompute((GRID_SIZE) / 8, (GRID_SIZE) / 8, (GRID_SIZE) / 8);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
@@ -160,6 +188,8 @@ void MarchingCubes::render(Camera camera)
     std::cout << "Rendering " << vertexCount << " vertices." << std::endl;
 
     glm::mat4 model = glm::mat4(1.0f);
+    // model = glm::translate(model, glm::vec3(-0.5f));        // Center the grid
+    // model = glm::scale(model, glm::vec3(1.0f / GRID_SIZE)); // Scale to [-0.5, 0.5] range
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 
     glm::mat4 view = camera.GetViewMatrix();
@@ -173,6 +203,7 @@ void MarchingCubes::render(Camera camera)
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void MarchingCubes::debugComputeShaderOutput()
