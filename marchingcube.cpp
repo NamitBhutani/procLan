@@ -30,33 +30,33 @@ MarchingCubes::~MarchingCubes()
 }
 std::vector<float> MarchingCubes::generateLandDensityField()
 {
+    FastNoiseLite baseNoise;
+    baseNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    baseNoise.SetFrequency(0.01f);
 
-    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    noise.SetFrequency(0.02f); // Lower frequency for smooth terrain
-    // FastNoiseLite detailNoise;
-    // detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    // detailNoise.SetFrequency(0.1f); // Higher frequency for finer details
+    FastNoiseLite detailNoise;
+    detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    detailNoise.SetFrequency(0.05f);
 
     std::vector<float> densityField(GRID_SIZE * GRID_SIZE * GRID_SIZE);
 
     for (int z = 0; z < GRID_SIZE; ++z)
     {
-        for (int y = 0; y < GRID_SIZE; ++y)
+        for (int x = 0; x < GRID_SIZE; ++x)
         {
-            for (int x = 0; x < GRID_SIZE; ++x)
+            float nx = static_cast<float>(x) / GRID_SIZE;
+            float nz = static_cast<float>(z) / GRID_SIZE;
+            float baseHeight = (baseNoise.GetNoise(nx * 150.0f, nz * 150.0f) * 0.5f + 1.0f) * (GRID_SIZE * 0.5f);
+
+            for (int y = 0; y < GRID_SIZE; ++y)
             {
                 int index = x + y * GRID_SIZE + z * GRID_SIZE * GRID_SIZE;
 
-                float nx = static_cast<float>(x) / GRID_SIZE;
                 float ny = static_cast<float>(y) / GRID_SIZE;
-                float nz = static_cast<float>(z) / GRID_SIZE;
 
-                float terrainHeight = (noise.GetNoise(nx * 150.0f, ny * 150.0f, nz * 150.0f));
-                terrainHeight *= GRID_SIZE * 0.6f;
+                float detail = detailNoise.GetNoise(nx * 100.0f, ny * 100.0f, nz * 100.0f);
 
-                // float detail = detailNoise.GetNoise(x * 0.2f, y * 0.2f, z * 0.2f) * 3.0f;
-
-                densityField[index] = (y - terrainHeight);
+                densityField[index] = (y - (baseHeight + detail));
             }
         }
     }
@@ -240,10 +240,10 @@ void MarchingCubes::render(Camera camera)
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    glm::vec3 lightPos(10.0f, 10.0f, 10.0f);
+    glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
     glm::vec3 viewPos = camera.Position;
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-    glm::vec3 objectColor(1.0f, 1.0f, 1.0f);
+    glm::vec3 objectColor(0.6f, 0.9f, 0.6f);
 
     glUniform3fv(glGetUniformLocation(renderShader, "lightPos"), 1, glm::value_ptr(lightPos));
     glUniform3fv(glGetUniformLocation(renderShader, "viewPos"), 1, glm::value_ptr(viewPos));
@@ -253,7 +253,7 @@ void MarchingCubes::render(Camera camera)
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void MarchingCubes::debugComputeShaderOutput()
