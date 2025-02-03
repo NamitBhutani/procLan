@@ -94,7 +94,7 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    // glDisable(GL_CULL_FACE);
 
     MarchingCubes marchingCubes;
     marchingCubes.initialize();
@@ -108,10 +108,10 @@ int main()
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        marchingCubes.resetVertexCounter();
+        //  marchingCubes.resetVertexCounter();
         marchingCubes.render(camera);
         // cout << "render done" << endl;
-        marchingCubes.debugComputeShaderOutput();
+        // marchingCubes.debugComputeShaderOutput();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

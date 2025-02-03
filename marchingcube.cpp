@@ -10,8 +10,9 @@ using namespace std;
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 MarchingCubes::MarchingCubes()
-    : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0),
-      counterBuffer(0), computeShader(0), renderShader(0), VAO(0)
+    : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0), normalSSBO(0),
+      counterBuffer(0),
+      computeShader(0), renderShader(0), VAO(0)
 {
 }
 
@@ -19,11 +20,48 @@ MarchingCubes::~MarchingCubes()
 {
     glDeleteBuffers(1, &densitySSBO);
     glDeleteBuffers(1, &vertexSSBO);
+    glDeleteBuffers(1, &normalSSBO);
     glDeleteBuffers(1, &edgeTableSSBO);
     glDeleteBuffers(1, &triTableSSBO);
+    glDeleteBuffers(1, &counterBuffer);
     glDeleteProgram(computeShader);
     glDeleteProgram(renderShader);
     glDeleteVertexArrays(1, &VAO);
+}
+std::vector<float> MarchingCubes::generateLandDensityField()
+{
+
+    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    noise.SetFrequency(0.02f); // Lower frequency for smooth terrain
+    // FastNoiseLite detailNoise;
+    // detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    // detailNoise.SetFrequency(0.1f); // Higher frequency for finer details
+
+    std::vector<float> densityField(GRID_SIZE * GRID_SIZE * GRID_SIZE);
+
+    for (int z = 0; z < GRID_SIZE; ++z)
+    {
+        for (int y = 0; y < GRID_SIZE; ++y)
+        {
+            for (int x = 0; x < GRID_SIZE; ++x)
+            {
+                int index = x + y * GRID_SIZE + z * GRID_SIZE * GRID_SIZE;
+
+                float nx = static_cast<float>(x) / GRID_SIZE;
+                float ny = static_cast<float>(y) / GRID_SIZE;
+                float nz = static_cast<float>(z) / GRID_SIZE;
+
+                float terrainHeight = (noise.GetNoise(nx * 150.0f, ny * 150.0f, nz * 150.0f));
+                terrainHeight *= GRID_SIZE * 0.6f;
+
+                // float detail = detailNoise.GetNoise(x * 0.2f, y * 0.2f, z * 0.2f) * 3.0f;
+
+                densityField[index] = (y - terrainHeight);
+            }
+        }
+    }
+
+    return densityField;
 }
 
 std::vector<float> MarchingCubes::generateDensityField()
@@ -43,7 +81,7 @@ std::vector<float> MarchingCubes::generateDensityField()
                 float nx = static_cast<float>(x) / GRID_SIZE;
                 float ny = static_cast<float>(y) / GRID_SIZE;
                 float nz = static_cast<float>(z) / GRID_SIZE;
-                densityField[index] = noise.GetNoise(nx * 10.0f, ny * 10.0f, nz * 10.0f);
+                densityField[index] = noise.GetNoise(nx * 100.0f, ny * 100.0f, nz * 100.0f);
             }
         }
     }
@@ -82,7 +120,7 @@ std::vector<float> MarchingCubes::generateSphereDensityField()
 void MarchingCubes::createDensitySSBO()
 {
     cout << "Creating density SSBO..." << endl;
-    std::vector<float> densityField = generateSphereDensityField();
+    std::vector<float> densityField = generateLandDensityField();
     cout << "densityField" << endl;
     glGenBuffers(1, &densitySSBO);
     cout << "buffers bound";
@@ -128,12 +166,17 @@ void MarchingCubes::initialize()
 
 void MarchingCubes::setupBuffers()
 {
-    int maxVertices = GRID_SIZE * GRID_SIZE * GRID_SIZE * 15; // worst-case vertex count
+    int maxVertices = GRID_SIZE * GRID_SIZE * GRID_SIZE * 15;
 
     glGenBuffers(1, &vertexSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER, maxVertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertexSSBO);
+
+    glGenBuffers(1, &normalSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, normalSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, maxVertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, normalSSBO);
 
     glGenBuffers(1, &counterBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
@@ -147,6 +190,10 @@ void MarchingCubes::setupBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, vertexSSBO);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), (void *)0);
     glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, normalSSBO);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -169,7 +216,6 @@ void MarchingCubes::setupShaders()
 
 void MarchingCubes::render(Camera camera)
 {
-
     glUseProgram(computeShader);
     glDispatchCompute((GRID_SIZE) / 8, (GRID_SIZE) / 8, (GRID_SIZE) / 8);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -185,20 +231,24 @@ void MarchingCubes::render(Camera camera)
         return;
     }
 
-    std::cout << "Rendering " << vertexCount << " vertices." << std::endl;
-
     glm::mat4 model = glm::mat4(1.0f);
-    // model = glm::translate(model, glm::vec3(-0.5f));        // Center the grid
-    // model = glm::scale(model, glm::vec3(1.0f / GRID_SIZE)); // Scale to [-0.5, 0.5] range
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-
     glm::mat4 view = camera.GetViewMatrix();
-
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
     glUseProgram(renderShader);
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    glm::vec3 lightPos(10.0f, 10.0f, 10.0f);
+    glm::vec3 viewPos = camera.Position;
+    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+    glm::vec3 objectColor(1.0f, 1.0f, 1.0f);
+
+    glUniform3fv(glGetUniformLocation(renderShader, "lightPos"), 1, glm::value_ptr(lightPos));
+    glUniform3fv(glGetUniformLocation(renderShader, "viewPos"), 1, glm::value_ptr(viewPos));
+    glUniform3fv(glGetUniformLocation(renderShader, "lightColor"), 1, glm::value_ptr(lightColor));
+    glUniform3fv(glGetUniformLocation(renderShader, "objectColor"), 1, glm::value_ptr(objectColor));
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);

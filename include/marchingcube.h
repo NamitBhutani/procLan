@@ -16,12 +16,14 @@ private:
     GLuint counterBuffer;
     GLuint computeShader;
     GLuint renderShader;
+    GLuint normalSSBO;
     GLuint VAO;
 
     FastNoiseLite noise;
 
     std::vector<float> generateDensityField();
     std::vector<float> generateSphereDensityField();
+    std::vector<float> generateLandDensityField();
     void createDensitySSBO();
     void uploadMarchingCubesTables();
     void setupShaders();
