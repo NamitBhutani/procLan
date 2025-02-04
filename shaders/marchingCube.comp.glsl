@@ -1,13 +1,20 @@
 #version 460 core
 
+struct VertexNormal {
+    vec4 position;
+    vec3 normal;
+    float pad; // padding for alignment (vec3 is 12 bytes; adding 4 bytes gives a 16-byte block)
+};
+
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 layout(std430, binding = 0) buffer DensityBuffer {
 float densities[];
 };
 
-layout(std430, binding = 1) buffer VertexBuffer {
-vec4 vertices[];
+// unified buffer for both vertices and normals.
+layout(std430, binding = 1) buffer VertexNormalBuffer {
+VertexNormal vertexNormals[];
 };
 
 layout(std430, binding = 2) buffer EdgeTableBuffer {
@@ -20,10 +27,6 @@ int triTable[256 * 16];
 
 layout(std430, binding = 4) buffer CounterBuffer {
 uint vertexCounter;
-};
-
-layout(std430, binding = 5) buffer NormalBuffer {
-vec3 normals[];
 };
 
 const float isoLevel = 0.0;
@@ -43,7 +46,6 @@ return mix(p1, p2, clamp(t, 0.0, 1.0));
 
 vec3 computeNormal(int x, int y, int z) {
 float dX = 0.0, dY = 0.0, dZ = 0.0;
-
 if(x > 0 && x < gridSize - 1) {
 dX = densities[index3D(x + 1, y, z, gridSize)] - densities[index3D(x - 1, y, z, gridSize)];
 }
@@ -53,7 +55,6 @@ dY = densities[index3D(x, y + 1, z, gridSize)] - densities[index3D(x, y - 1, z, 
 if(z > 0 && z < gridSize - 1) {
 dZ = densities[index3D(x, y, z + 1, gridSize)] - densities[index3D(x, y, z - 1, gridSize)];
 }
-
 return normalize(vec3(dX, dY, dZ));
 }
 
@@ -102,9 +103,6 @@ vec3 p5 = vec3(pos.x + 1, pos.y, pos.z + 1);
 vec3 p6 = vec3(pos.x + 1, pos.y + 1, pos.z + 1);
 vec3 p7 = vec3(pos.x, pos.y + 1, pos.z + 1);
 
-vec3 edgeVerts[12];
-vec3 edgeNormals[12];
-
 vec3 normal0 = computeNormal(pos.x, pos.y, pos.z);
 vec3 normal1 = computeNormal(pos.x + 1, pos.y, pos.z);
 vec3 normal2 = computeNormal(pos.x + 1, pos.y + 1, pos.z);
@@ -113,6 +111,9 @@ vec3 normal4 = computeNormal(pos.x, pos.y, pos.z + 1);
 vec3 normal5 = computeNormal(pos.x + 1, pos.y, pos.z + 1);
 vec3 normal6 = computeNormal(pos.x + 1, pos.y + 1, pos.z + 1);
 vec3 normal7 = computeNormal(pos.x, pos.y + 1, pos.z + 1);
+
+vec3 edgeVerts[12];
+vec3 edgeNormals[12];
 
 if((edgeTable[cubeIndex] & 1) != 0) {
 edgeVerts[0] = interpolateVertex(p0, p1, d0, d1);
@@ -163,6 +164,7 @@ edgeVerts[11] = interpolateVertex(p3, p7, d3, d7);
 edgeNormals[11] = interpolateNormal(normal3, normal7, d3, d7);
 }
 
+    // Use the triangle table to output vertices.
 int baseIndex = cubeIndex * 16;
 for(int i = 0;
 i < 16;
@@ -173,12 +175,16 @@ int triIndex1 = triTable[baseIndex + i + 1];
 int triIndex2 = triTable[baseIndex + i + 2];
 
 uint startIndex = atomicAdd(vertexCounter, 3);
-vertices[startIndex] = vec4(edgeVerts[triIndex0], 1.0);
-vertices[startIndex + 1] = vec4(edgeVerts[triIndex1], 1.0);
-vertices[startIndex + 2] = vec4(edgeVerts[triIndex2], 1.0);
+vertexNormals[startIndex].position = vec4(edgeVerts[triIndex0], 1.0);
+vertexNormals[startIndex].normal = edgeNormals[triIndex0];
+vertexNormals[startIndex].pad = 0.0;
 
-normals[startIndex] = edgeNormals[triIndex0];
-normals[startIndex + 1] = edgeNormals[triIndex1];
-normals[startIndex + 2] = edgeNormals[triIndex2];
+vertexNormals[startIndex + 1].position = vec4(edgeVerts[triIndex1], 1.0);
+vertexNormals[startIndex + 1].normal = edgeNormals[triIndex1];
+vertexNormals[startIndex + 1].pad = 0.0;
+
+vertexNormals[startIndex + 2].position = vec4(edgeVerts[triIndex2], 1.0);
+vertexNormals[startIndex + 2].normal = edgeNormals[triIndex2];
+vertexNormals[startIndex + 2].pad = 0.0;
 }
 }

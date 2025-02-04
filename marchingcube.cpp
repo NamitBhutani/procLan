@@ -9,6 +9,12 @@
 using namespace std;
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+struct VertexNormal
+{
+    glm::vec4 position;
+    glm::vec3 normal;
+    float pad;
+};
 MarchingCubes::MarchingCubes()
     : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0), normalSSBO(0),
       counterBuffer(0),
@@ -170,13 +176,8 @@ void MarchingCubes::setupBuffers()
 
     glGenBuffers(1, &vertexSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, maxVertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, maxVertices * sizeof(VertexNormal), nullptr, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertexSSBO);
-
-    glGenBuffers(1, &normalSSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, normalSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, maxVertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, normalSSBO);
 
     glGenBuffers(1, &counterBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
@@ -188,18 +189,14 @@ void MarchingCubes::setupBuffers()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexSSBO);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), (void *)0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VertexNormal), (void *)0);
     glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, normalSSBO);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNormal), (void *)16);
     glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-
 void MarchingCubes::setupShaders()
 {
 
@@ -240,7 +237,7 @@ void MarchingCubes::render(Camera camera)
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
+    glm::vec3 lightPos(0.0f, 40.0f, 60.0f);
     glm::vec3 viewPos = camera.Position;
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
     glm::vec3 objectColor(0.6f, 0.9f, 0.6f);
@@ -253,7 +250,7 @@ void MarchingCubes::render(Camera camera)
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void MarchingCubes::debugComputeShaderOutput()
@@ -290,7 +287,6 @@ void MarchingCubes::debugComputeShaderOutput()
     {
         std::cerr << "Error: Failed to map vertex buffer!" << std::endl;
     }
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 void MarchingCubes::resetVertexCounter()
