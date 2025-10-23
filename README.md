@@ -37,11 +37,9 @@ This project uses a compute-shader-based pipeline to minimize CPU overhead.
 ## Building the Project
 
 ```bash
-# 1. Clone the repository and submodules
 git clone --recursive https://github.com/NamitBhutani/procLan.git
 cd procLan
 
-# 2. (Add your build steps here, e.g., CMake)
 mkdir build
 cd build
 cmake ..
