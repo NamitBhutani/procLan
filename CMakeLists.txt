@@ -50,11 +50,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     assimp
     ${CMAKE_DL_LIBS})
 
-# Copy shader files to build directory
-file(COPY ${SHADER_FILES} DESTINATION ${CMAKE_BINARY_DIR}/shaders)
+set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
+set(SHADER_DEST_DIR "${CMAKE_BINARY_DIR}/shaders")
 
-# Add custom command to copy shaders when they change
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/shaders
-    ${CMAKE_BINARY_DIR}/shaders)
+file(MAKE_DIRECTORY ${SHADER_DEST_DIR})
+
+add_custom_target(copyShaders ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SHADER_SOURCE_DIR} ${SHADER_DEST_DIR}
+    COMMENT "copying shaders to build directory"
+)
+
+add_dependencies(${PROJECT_NAME} copyShaders)
