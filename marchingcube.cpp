@@ -17,7 +17,7 @@ struct VertexNormal
 };
 MarchingCubes::MarchingCubes()
     : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0), normalSSBO(0),
-      counterBuffer(0),
+      counterBuffer(0), densityComputeShader(0),
       computeShader(0), renderShader(0), VAO(0)
 {
 }
@@ -32,13 +32,14 @@ MarchingCubes::~MarchingCubes()
     glDeleteBuffers(1, &counterBuffer);
     glDeleteProgram(computeShader);
     glDeleteProgram(renderShader);
+    glDeleteProgram(densityComputeShader);
     glDeleteVertexArrays(1, &VAO);
 }
 std::vector<float> MarchingCubes::generateLandDensityField()
 {
     FastNoiseLite baseNoise;
     baseNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    baseNoise.SetFrequency(0.01f);
+    baseNoise.SetFrequency(0.015f);
 
     FastNoiseLite detailNoise;
     detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
@@ -125,18 +126,27 @@ std::vector<float> MarchingCubes::generateSphereDensityField()
 }
 void MarchingCubes::createDensitySSBO()
 {
-    cout << "Creating density SSBO..." << endl;
-    std::vector<float> densityField = generateLandDensityField();
-    cout << "densityField" << endl;
+    // cout << "Creating density SSBO..." << endl;
+    // std::vector<float> densityField = generateLandDensityField();
+    // cout << "densityField" << endl;
+    // glGenBuffers(1, &densitySSBO);
+    // cout << "buffers bound";
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, densitySSBO);
+    // glBufferData(GL_SHADER_STORAGE_BUFFER, densityField.size() * sizeof(float), densityField.data(), GL_DYNAMIC_DRAW);
+    // GLenum error = glGetError();
+    // if (error != GL_NO_ERROR)
+    // {
+    //     std::cerr << "OpenGL Error after glBufferData: " << error << std::endl;
+    // }
+    // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    int totalElements = GRID_SIZE * GRID_SIZE * GRID_SIZE;
+
     glGenBuffers(1, &densitySSBO);
-    cout << "buffers bound";
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, densitySSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, densityField.size() * sizeof(float), densityField.data(), GL_DYNAMIC_DRAW);
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR)
-    {
-        std::cerr << "OpenGL Error after glBufferData: " << error << std::endl;
-    }
+
+    glBufferData(GL_SHADER_STORAGE_BUFFER, totalElements * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
@@ -209,10 +219,26 @@ void MarchingCubes::setupShaders()
         Shader renderShaderObj("shaders/vertex.glsl", "shaders/fragment.glsl");
         renderShader = renderShaderObj.ID;
     }
+
+    {
+        Shader densityShaderObj("shaders/density.comp.glsl");
+        densityComputeShader = densityShaderObj.ID;
+    }
 }
 
 void MarchingCubes::render(Camera camera)
 {
+    // generate terrain noise
+    glUseProgram(densityComputeShader);
+    glUniform1i(glGetUniformLocation(densityComputeShader, "gridSize"), GRID_SIZE);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
+
+    glDispatchCompute(GRID_SIZE / 8, GRID_SIZE / 8, GRID_SIZE / 8);
+
+    // wait for density generation to finish before meshing
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
     glUseProgram(computeShader);
     glDispatchCompute((GRID_SIZE) / 8, (GRID_SIZE) / 8, (GRID_SIZE) / 8);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

@@ -16,6 +16,7 @@ private:
     GLuint counterBuffer;
     GLuint computeShader;
     GLuint renderShader;
+    GLuint densityComputeShader;
     GLuint normalSSBO;
     GLuint VAO;
 
