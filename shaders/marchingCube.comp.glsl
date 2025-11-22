@@ -45,17 +45,21 @@ return mix(p1, p2, clamp(t, 0.0, 1.0));
 }
 
 vec3 computeNormal(int x, int y, int z) {
-float dX = 0.0, dY = 0.0, dZ = 0.0;
-if(x > 0 && x < gridSize - 1) {
-dX = densities[index3D(x + 1, y, z, gridSize)] - densities[index3D(x - 1, y, z, gridSize)];
-}
-if(y > 0 && y < gridSize - 1) {
-dY = densities[index3D(x, y + 1, z, gridSize)] - densities[index3D(x, y - 1, z, gridSize)];
-}
-if(z > 0 && z < gridSize - 1) {
-dZ = densities[index3D(x, y, z + 1, gridSize)] - densities[index3D(x, y, z - 1, gridSize)];
-}
-return normalize(vec3(dX, dY, dZ));
+    // clamp indices to stay inside the 0..31 range
+    int x0 = max(x - 1, 0);
+    int x1 = min(x + 1, gridSize - 1);
+    
+    int y0 = max(y - 1, 0);
+    int y1 = min(y + 1, gridSize - 1);
+    
+    int z0 = max(z - 1, 0);
+    int z1 = min(z + 1, gridSize - 1);
+
+    float dX = densities[index3D(x0, y, z, gridSize)] - densities[index3D(x1, y, z, gridSize)];
+    float dY = densities[index3D(x, y0, z, gridSize)] - densities[index3D(x, y1, z, gridSize)];
+    float dZ = densities[index3D(x, y, z0, gridSize)] - densities[index3D(x, y, z1, gridSize)];
+
+    return normalize(vec3(dX, dY, dZ));
 }
 
 vec3 interpolateNormal(vec3 normal0, vec3 normal1, float val0, float val1) {
