@@ -8,13 +8,13 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <vector>
 
 class Shader
 {
 public:
     unsigned int ID;
 
-    // Constructor for vertex & fragment shaders
     Shader(const char *vertexPath, const char *fragmentPath)
     {
         std::string vertexCode;
@@ -63,25 +63,21 @@ public:
         glDeleteShader(fragment);
     }
 
-    // Constructor for compute shaders
-    Shader(const char *computePath)
+    Shader(const char *computePath, const std::vector<std::string> &includePaths = {})
     {
-        std::string computeCode;
-        std::ifstream cShaderFile;
-        cShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try
+        std::string computeCode = readFile(computePath);
+
+        std::string fullSource = "#version 460 core\n";
+
+        for (const auto &path : includePaths)
         {
-            cShaderFile.open(computePath);
-            std::stringstream cShaderStream;
-            cShaderStream << cShaderFile.rdbuf();
-            cShaderFile.close();
-            computeCode = cShaderStream.str();
+            std::string includeCode = readFile(path.c_str());
+            fullSource += removeVersionTag(includeCode) + "\n";
         }
-        catch (std::ifstream::failure &e)
-        {
-            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
-        }
-        const char *cShaderCode = computeCode.c_str();
+
+        fullSource += removeVersionTag(computeCode);
+
+        const char *cShaderCode = fullSource.c_str();
 
         unsigned int compute;
         compute = glCreateShader(GL_COMPUTE_SHADER);
@@ -124,6 +120,40 @@ public:
     }
 
 private:
+    std::string readFile(const char *path)
+    {
+        std::string code;
+        std::ifstream file;
+        file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        try
+        {
+            file.open(path);
+            std::stringstream stream;
+            stream << file.rdbuf();
+            file.close();
+            code = stream.str();
+        }
+        catch (std::ifstream::failure &e)
+        {
+            std::cout << "ERROR::SHADER::FILE_NOT_READ: " << path << std::endl;
+        }
+        return code;
+    }
+
+    std::string removeVersionTag(std::string code)
+    {
+        size_t versionPos = code.find("#version");
+        if (versionPos != std::string::npos)
+        {
+            size_t lineEnd = code.find('\n', versionPos);
+            if (lineEnd != std::string::npos)
+            {
+                return code.substr(lineEnd + 1);
+            }
+        }
+        return code;
+    }
+
     void checkCompileErrors(GLuint shader, std::string type)
     {
         GLint success;

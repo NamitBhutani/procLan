@@ -209,7 +209,6 @@ void MarchingCubes::setupBuffers()
 }
 void MarchingCubes::setupShaders()
 {
-
     {
         Shader computeShaderObj("shaders/marchingCube.comp.glsl");
         computeShader = computeShaderObj.ID;
@@ -221,7 +220,9 @@ void MarchingCubes::setupShaders()
     }
 
     {
-        Shader densityShaderObj("shaders/density.comp.glsl");
+        std::vector<std::string> includes = {"shaders/FastNoiseLite.glsl"};
+
+        Shader densityShaderObj("shaders/density.comp.glsl", includes);
         densityComputeShader = densityShaderObj.ID;
     }
 }
@@ -231,6 +232,8 @@ void MarchingCubes::render(Camera camera)
     // generate terrain noise
     glUseProgram(densityComputeShader);
     glUniform1i(glGetUniformLocation(densityComputeShader, "gridSize"), GRID_SIZE);
+    glUniform1i(glGetUniformLocation(densityComputeShader, "u_Seed"), 12345);
+    glUniform3f(glGetUniformLocation(densityComputeShader, "u_Offset"), 0.0f, 0.0f, 0.0f);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
 
