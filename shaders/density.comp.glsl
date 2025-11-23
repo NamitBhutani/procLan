@@ -6,17 +6,18 @@ layout(std430, binding = 0) buffer DensityBuffer {
 };
 
 uniform int gridSize;
+uniform int densitySize;
 uniform int u_Seed;
-uniform vec3 u_Offset;   // Pass chunk offset (e.g., vec3(0,0,0))
+uniform vec3 u_Offset;
 
 void main() {
     uvec3 id = gl_GlobalInvocationID.xyz;
-    if (id.x >= gridSize || id.y >= gridSize || id.z >= gridSize) return;
+    if (id.x >= densitySize || id.y >= densitySize || id.z >= densitySize) return;
 
-    uint index = id.x + id.y * gridSize + id.z * gridSize * gridSize;
+    uint index = id.x + id.y * densitySize + id.z * densitySize * densitySize;
     
     // calc World Position for this voxel
-    vec3 worldPos = vec3(id) + u_Offset;
+    vec3 worldPos = vec3(id) + u_Offset - vec3(1.0);
 
     // setup noise
     fnl_state noise = fnlCreateState(u_Seed);
@@ -30,11 +31,6 @@ void main() {
 
     float val = terrainHeight - worldPos.y;
 
-    if (id.x == 0 || id.x == gridSize - 1 || 
-            id.z == 0 || id.z == gridSize - 1 || 
-            id.y == 0) { // y == 0 adds a floor for visualisation rn
-            val = -1.0; 
-        }
     
     // todo: sdf cave system goes here
     density[index] = val;

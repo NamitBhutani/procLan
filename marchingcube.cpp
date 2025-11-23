@@ -140,7 +140,7 @@ void MarchingCubes::createDensitySSBO()
     // }
     // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
     // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    int totalElements = GRID_SIZE * GRID_SIZE * GRID_SIZE;
+    int totalElements = DENSITY_SIZE * DENSITY_SIZE * DENSITY_SIZE;
 
     glGenBuffers(1, &densitySSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, densitySSBO);
@@ -232,18 +232,22 @@ void MarchingCubes::render(Camera camera)
     // generate terrain noise
     glUseProgram(densityComputeShader);
     glUniform1i(glGetUniformLocation(densityComputeShader, "gridSize"), GRID_SIZE);
+    glUniform1i(glGetUniformLocation(densityComputeShader, "densitySize"), DENSITY_SIZE);
     glUniform1i(glGetUniformLocation(densityComputeShader, "u_Seed"), 12345);
     glUniform3f(glGetUniformLocation(densityComputeShader, "u_Offset"), 0.0f, 0.0f, 0.0f);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
 
-    glDispatchCompute(GRID_SIZE / 8, GRID_SIZE / 8, GRID_SIZE / 8);
+    // glDispatchCompute(GRID_SIZE / 8, GRID_SIZE / 8, GRID_SIZE / 8);
+    glDispatchCompute((DENSITY_SIZE + 7) / 8, (DENSITY_SIZE + 7) / 8, (DENSITY_SIZE + 7) / 8);
 
     // wait for density generation to finish before meshing
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glUseProgram(computeShader);
-    glDispatchCompute((GRID_SIZE) / 8, (GRID_SIZE) / 8, (GRID_SIZE) / 8);
+    glUniform1i(glGetUniformLocation(computeShader, "gridSize"), GRID_SIZE);
+    glUniform1i(glGetUniformLocation(computeShader, "densitySize"), DENSITY_SIZE);
+    glDispatchCompute((GRID_SIZE + 7) / 8, (GRID_SIZE + 7) / 8, (GRID_SIZE + 7) / 8);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
@@ -259,7 +263,7 @@ void MarchingCubes::render(Camera camera)
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = camera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 
     glUseProgram(renderShader);
     glUniformMatrix4fv(glGetUniformLocation(renderShader, "model"), 1, GL_FALSE, glm::value_ptr(model));

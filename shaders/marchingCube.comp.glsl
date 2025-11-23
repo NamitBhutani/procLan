@@ -30,10 +30,11 @@ uint vertexCounter;
 };
 
 const float isoLevel = 0.0;
-const int gridSize = 32;
+uniform int gridSize;
+uniform int densitySize;
 
-int index3D(int x, int y, int z, int gridSize) {
-return x + y * gridSize + z * gridSize * gridSize;
+int index3D(int x, int y, int z) {
+return x + y * densitySize + z * densitySize * densitySize;
 }
 
 vec3 interpolateVertex(vec3 p1, vec3 p2, float val1, float val2) {
@@ -46,18 +47,23 @@ return mix(p1, p2, clamp(t, 0.0, 1.0));
 
 vec3 computeNormal(int x, int y, int z) {
     // clamp indices to stay inside the 0..31 range
-    int x0 = max(x - 1, 0);
-    int x1 = min(x + 1, gridSize - 1);
+    // int x0 = max(x - 1, 0);
+    // int x1 = min(x + 1, gridSize - 1);
     
-    int y0 = max(y - 1, 0);
-    int y1 = min(y + 1, gridSize - 1);
+    // int y0 = max(y - 1, 0);
+    // int y1 = min(y + 1, gridSize - 1);
     
-    int z0 = max(z - 1, 0);
-    int z1 = min(z + 1, gridSize - 1);
+    // int z0 = max(z - 1, 0);
+    // int z1 = min(z + 1, gridSize - 1);
 
-    float dX = densities[index3D(x0, y, z, gridSize)] - densities[index3D(x1, y, z, gridSize)];
-    float dY = densities[index3D(x, y0, z, gridSize)] - densities[index3D(x, y1, z, gridSize)];
-    float dZ = densities[index3D(x, y, z0, gridSize)] - densities[index3D(x, y, z1, gridSize)];
+    // float dX = densities[index3D(x0, y, z, gridSize)] - densities[index3D(x1, y, z, gridSize)];
+    // float dY = densities[index3D(x, y0, z, gridSize)] - densities[index3D(x, y1, z, gridSize)];
+    // float dZ = densities[index3D(x, y, z0, gridSize)] - densities[index3D(x, y, z1, gridSize)];
+
+    // return normalize(vec3(dX, dY, dZ));
+    float dX = densities[index3D(x, y + 1, z + 1)] - densities[index3D(x + 2, y + 1, z + 1)];
+    float dY = densities[index3D(x + 1, y, z + 1)] - densities[index3D(x + 1, y + 2, z + 1)];
+    float dZ = densities[index3D(x + 1, y + 1, z)] - densities[index3D(x + 1, y + 1, z + 2)];
 
     return normalize(vec3(dX, dY, dZ));
 }
@@ -77,14 +83,14 @@ if(pos.x >= gridSize - 1 || pos.y >= gridSize - 1 || pos.z >= gridSize - 1) {
 return;
 }
 
-float d0 = densities[index3D(pos.x, pos.y, pos.z, gridSize)];
-float d1 = densities[index3D(pos.x + 1, pos.y, pos.z, gridSize)];
-float d2 = densities[index3D(pos.x + 1, pos.y + 1, pos.z, gridSize)];
-float d3 = densities[index3D(pos.x, pos.y + 1, pos.z, gridSize)];
-float d4 = densities[index3D(pos.x, pos.y, pos.z + 1, gridSize)];
-float d5 = densities[index3D(pos.x + 1, pos.y, pos.z + 1, gridSize)];
-float d6 = densities[index3D(pos.x + 1, pos.y + 1, pos.z + 1, gridSize)];
-float d7 = densities[index3D(pos.x, pos.y + 1, pos.z + 1, gridSize)];
+float d0 = densities[index3D(pos.x + 1, pos.y + 1, pos.z + 1)];
+float d1 = densities[index3D(pos.x + 2, pos.y + 1, pos.z + 1)];
+float d2 = densities[index3D(pos.x + 2, pos.y + 2, pos.z + 1)];
+float d3 = densities[index3D(pos.x + 1, pos.y + 2, pos.z + 1)];
+float d4 = densities[index3D(pos.x + 1, pos.y + 1, pos.z + 2)];
+float d5 = densities[index3D(pos.x + 2, pos.y + 1, pos.z + 2)];
+float d6 = densities[index3D(pos.x + 2, pos.y + 2, pos.z + 2)];
+float d7 = densities[index3D(pos.x + 1, pos.y + 2, pos.z + 2)];
 
 int cubeIndex = 0;
 if(d0 < isoLevel) cubeIndex |= 1;
@@ -115,7 +121,6 @@ vec3 normal4 = computeNormal(pos.x, pos.y, pos.z + 1);
 vec3 normal5 = computeNormal(pos.x + 1, pos.y, pos.z + 1);
 vec3 normal6 = computeNormal(pos.x + 1, pos.y + 1, pos.z + 1);
 vec3 normal7 = computeNormal(pos.x, pos.y + 1, pos.z + 1);
-
 vec3 edgeVerts[12];
 vec3 edgeNormals[12];
 

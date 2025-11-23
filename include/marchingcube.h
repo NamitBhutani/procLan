@@ -9,6 +9,7 @@ class MarchingCubes
 {
 private:
     static const int GRID_SIZE = 32;
+    static const int DENSITY_SIZE = GRID_SIZE + 3;
     GLuint densitySSBO;
     GLuint vertexSSBO;
     GLuint edgeTableSSBO;
