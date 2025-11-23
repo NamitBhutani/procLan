@@ -30,7 +30,12 @@ void main() {
 
     float val = terrainHeight - worldPos.y;
 
+    if (id.x == 0 || id.x == gridSize - 1 || 
+            id.z == 0 || id.z == gridSize - 1 || 
+            id.y == 0) { // y == 0 adds a floor for visualisation rn
+            val = -1.0; 
+        }
+    
     // todo: sdf cave system goes here
-
     density[index] = val;
 }
