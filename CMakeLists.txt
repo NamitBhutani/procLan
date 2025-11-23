@@ -20,11 +20,16 @@ target_include_directories(glad PRIVATE
     glad/include)
 
 # Collect all source files
-set(SOURCE_FILES
+file(GLOB SOURCE_FILES
     edgetable.cpp
     tritable.cpp
     marchingcube.cpp
-    main.cpp)
+    main.cpp
+    imgui/*.cpp 
+    imgui/*.h
+    imgui/misc/cpp/imgui_stdlib.*
+    imgui/backends/imgui_impl_glfw.*
+    imgui/backends/imgui_impl_opengl3.*)
 
 # Collect all shader files using GLOB
 file(GLOB SHADER_FILES
@@ -38,6 +43,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     glad/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends
     ${GLFW_INCLUDE_DIRS}
     ${GLM_INCLUDE_DIRS}
     $ENV{GLM_INCLUDE_DIR})
