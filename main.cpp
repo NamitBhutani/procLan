@@ -1,3 +1,6 @@
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -6,42 +9,56 @@
 #include "include/marchingcube.h"
 #include "include/camera.h"
 #include <iostream>
-using namespace std;
+
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
 // camera
 Camera camera(glm::vec3(0.0f, 40.0f, 40.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+double curX = SCR_WIDTH / 2.0;
+double curY = SCR_HEIGHT / 2.0;
+bool mouseMoved = false;
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+bool show_control_window = false;
+bool prev_show_control_window = show_control_window;
+
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    // Record latest cursor position; actual camera processing happens in main loop
+    curX = xposIn;
+    curY = yposIn;
+    mouseMoved = true;
 }
+
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    ImGuiIO &io = ImGui::GetIO();
+    if (show_control_window && io.WantCaptureKeyboard)
+    {
+        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+        {
+            show_control_window = !show_control_window;
+            return;
+        }
+        // do not allow any other keyboard input
+        return;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+    {
+        show_control_window = !show_control_window;
+        return;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -56,16 +73,11 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
 }
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
-// void processInput(GLFWwindow *window)
-// {
-//     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-//         glfwSetWindowShouldClose(window, true);
-// }
 
 int main()
 {
@@ -103,6 +115,24 @@ int main()
     MarchingCubes marchingCubes;
     marchingCubes.initialize();
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    ImGui::StyleColorsDark();
+    ImGuiStyle &style = ImGui::GetStyle();
+
+    float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()) * 1.25f;
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    const char *glsl_version = "#version 460 core";
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
@@ -110,12 +140,77 @@ int main()
         lastFrame = currentFrame;
         processInput(window);
 
+        // switch cursor mode depending on control window
+        if (show_control_window)
+        {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else
+        {
+            // if switching from ui to scene, reset firstMouse to stop camera jump
+            if (prev_show_control_window)
+                firstMouse = true;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+        prev_show_control_window = show_control_window;
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // process mouse movement only when no ImGui mouse capture
+        ImGuiIO &io = ImGui::GetIO();
+        if (!io.WantCaptureMouse && !show_control_window)
+        {
+            if (mouseMoved)
+            {
+                float xpos = static_cast<float>(curX);
+                float ypos = static_cast<float>(curY);
+
+                if (firstMouse)
+                {
+                    lastX = xpos;
+                    lastY = ypos;
+                    firstMouse = false;
+                }
+
+                float xoffset = xpos - lastX;
+                float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+                lastX = xpos;
+                lastY = ypos;
+
+                camera.ProcessMouseMovement(xoffset, yoffset);
+                mouseMoved = false;
+            }
+        }
+        else
+        {
+            firstMouse = true;
+            mouseMoved = false;
+        }
+
+        if (show_control_window)
+        {
+            ImGui::Begin("Controls & Editor", &show_control_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Terrain Seed");
+            ImGui::SameLine();
+            ImGui::InputInt("##seed", &marchingCubes.seed);
+            ImGui::Separator();
+            ImGui::TextDisabled("Press M to toggle this window");
+            ImGui::End();
+        }
+
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         //  marchingCubes.resetVertexCounter();
         marchingCubes.render(camera);
         // cout << "render done" << endl;
-        marchingCubes.debugComputeShaderOutput();
+        // marchingCubes.debugComputeShaderOutput();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
         glfwPollEvents();

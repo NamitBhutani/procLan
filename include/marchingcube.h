@@ -38,4 +38,5 @@ public:
     void render(Camera camera);
     void debugComputeShaderOutput();
     void resetVertexCounter();
+    int seed;
 };

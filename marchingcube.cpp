@@ -18,7 +18,7 @@ struct VertexNormal
 MarchingCubes::MarchingCubes()
     : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0), normalSSBO(0),
       counterBuffer(0), densityComputeShader(0),
-      computeShader(0), renderShader(0), VAO(0)
+    computeShader(0), renderShader(0), VAO(0), seed(12345)
 {
 }
 
@@ -233,7 +233,7 @@ void MarchingCubes::render(Camera camera)
     glUseProgram(densityComputeShader);
     glUniform1i(glGetUniformLocation(densityComputeShader, "gridSize"), GRID_SIZE);
     glUniform1i(glGetUniformLocation(densityComputeShader, "densitySize"), DENSITY_SIZE);
-    glUniform1i(glGetUniformLocation(densityComputeShader, "u_Seed"), 12345);
+    glUniform1i(glGetUniformLocation(densityComputeShader, "u_Seed"), seed);
     glUniform3f(glGetUniformLocation(densityComputeShader, "u_Offset"), 0.0f, 0.0f, 0.0f);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
@@ -243,6 +243,8 @@ void MarchingCubes::render(Camera camera)
 
     // wait for density generation to finish before meshing
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    resetVertexCounter();
 
     glUseProgram(computeShader);
     glUniform1i(glGetUniformLocation(computeShader, "gridSize"), GRID_SIZE);
