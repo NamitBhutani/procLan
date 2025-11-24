@@ -114,7 +114,7 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
-    // glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
     MarchingCubes marchingCubes;
     marchingCubes.initialize();
