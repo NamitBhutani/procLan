@@ -12,9 +12,7 @@ pkgs.mkShell {
     cmake
     ninja   
     assimp
+    xorg.libX11
+    xorg.libXrandr
   ];
-
-  shellHook = ''
-    zsh
-  '';
 }
