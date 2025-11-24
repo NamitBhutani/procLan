@@ -6,19 +6,21 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-using namespace std;
+
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
 struct VertexNormal
 {
     glm::vec4 position;
     glm::vec3 normal;
     float pad;
 };
+
 MarchingCubes::MarchingCubes()
     : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0), normalSSBO(0),
       counterBuffer(0), densityComputeShader(0),
-    computeShader(0), renderShader(0), VAO(0), seed(12345)
+      computeShader(0), renderShader(0), VAO(0), seed(12345)
 {
 }
 
@@ -35,95 +37,7 @@ MarchingCubes::~MarchingCubes()
     glDeleteProgram(densityComputeShader);
     glDeleteVertexArrays(1, &VAO);
 }
-std::vector<float> MarchingCubes::generateLandDensityField()
-{
-    FastNoiseLite baseNoise;
-    baseNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    baseNoise.SetFrequency(0.015f);
 
-    FastNoiseLite detailNoise;
-    detailNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    detailNoise.SetFrequency(0.05f);
-
-    std::vector<float> densityField(GRID_SIZE * GRID_SIZE * GRID_SIZE);
-
-    for (int z = 0; z < GRID_SIZE; ++z)
-    {
-        for (int x = 0; x < GRID_SIZE; ++x)
-        {
-            float nx = static_cast<float>(x) / GRID_SIZE;
-            float nz = static_cast<float>(z) / GRID_SIZE;
-            float baseHeight = (baseNoise.GetNoise(nx * 150.0f, nz * 150.0f) * 0.5f + 1.0f) * (GRID_SIZE * 0.5f);
-
-            for (int y = 0; y < GRID_SIZE; ++y)
-            {
-                int index = x + y * GRID_SIZE + z * GRID_SIZE * GRID_SIZE;
-
-                float ny = static_cast<float>(y) / GRID_SIZE;
-
-                float detail = detailNoise.GetNoise(nx * 100.0f, ny * 100.0f, nz * 100.0f);
-
-                densityField[index] = (y - (baseHeight + detail));
-            }
-        }
-    }
-
-    return densityField;
-}
-
-std::vector<float> MarchingCubes::generateDensityField()
-{
-    cout << "enter generateDensityField" << endl;
-    noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-    cout << "setnoisetype" << endl;
-    std::vector<float> densityField(GRID_SIZE * GRID_SIZE * GRID_SIZE);
-    cout << "density field init" << endl;
-    for (int z = 0; z < GRID_SIZE; ++z)
-    {
-        for (int y = 0; y < GRID_SIZE; ++y)
-        {
-            for (int x = 0; x < GRID_SIZE; ++x)
-            {
-                int index = x + y * GRID_SIZE + z * GRID_SIZE * GRID_SIZE;
-                float nx = static_cast<float>(x) / GRID_SIZE;
-                float ny = static_cast<float>(y) / GRID_SIZE;
-                float nz = static_cast<float>(z) / GRID_SIZE;
-                densityField[index] = noise.GetNoise(nx * 100.0f, ny * 100.0f, nz * 100.0f);
-            }
-        }
-    }
-    cout << "density field set";
-    return densityField;
-}
-std::vector<float> MarchingCubes::generateSphereDensityField()
-{
-    std::vector<float> densityField(GRID_SIZE * GRID_SIZE * GRID_SIZE);
-
-    // Define sphere parameters
-    glm::vec3 center(GRID_SIZE / 2.0f, GRID_SIZE / 2.0f, GRID_SIZE / 2.0f);
-    float radius = GRID_SIZE / 4.0f; // This will make the sphere take up half the grid
-
-    for (int z = 0; z < GRID_SIZE; ++z)
-    {
-        for (int y = 0; y < GRID_SIZE; ++y)
-        {
-            for (int x = 0; x < GRID_SIZE; ++x)
-            {
-                int index = x + y * GRID_SIZE + z * GRID_SIZE * GRID_SIZE;
-
-                // Calculate distance from current point to sphere center
-                glm::vec3 pos(x, y, z);
-                float distance = glm::length(pos - center) - radius;
-
-                // The density is the signed distance field:
-                // Negative inside the sphere, positive outside
-                densityField[index] = distance;
-            }
-        }
-    }
-
-    return densityField;
-}
 void MarchingCubes::createDensitySSBO()
 {
     // cout << "Creating density SSBO..." << endl;

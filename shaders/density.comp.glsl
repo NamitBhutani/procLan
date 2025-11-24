@@ -19,19 +19,31 @@ void main() {
     // calc World Position for this voxel
     vec3 worldPos = vec3(id) + u_Offset - vec3(1.0);
 
-    // setup noise
+    // setup warp noise
+    fnl_state warpNoise = fnlCreateState(u_Seed);
+    warpNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    warpNoise.domain_warp_type = FNL_DOMAIN_WARP_OPENSIMPLEX2;
+    warpNoise.frequency = 0.03;
+    warpNoise.domain_warp_amp = 20;
+
+    FNLfloat wx = worldPos.x;
+    FNLfloat wy = worldPos.y;
+    FNLfloat wz = worldPos.z;
+    fnlDomainWarp3D(warpNoise, wx, wy, wz);
+    vec3 warpedPos = vec3(wx, wy, wz);
+
+    // setup base noise for terrain
     fnl_state noise = fnlCreateState(u_Seed);
     noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
     noise.fractal_type = FNL_FRACTAL_FBM;
     noise.frequency = 0.02; 
     noise.octaves = 4;
 
-    // 2d noise
-    float terrainHeight = fnlGetNoise3D(noise, worldPos.x, 0.0, worldPos.z) * 20.0 + 10.0;
+    // 2D terrain noise sampled from warped domain
+    float terrainHeight = fnlGetNoise3D(noise, warpedPos.x, 0.0, warpedPos.z) * 20.0 + 10.0;
 
     float val = terrainHeight - worldPos.y;
 
-    
     // todo: sdf cave system goes here
     density[index] = val;
 }

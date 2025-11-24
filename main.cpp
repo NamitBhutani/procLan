@@ -9,6 +9,8 @@
 #include "include/marchingcube.h"
 #include "include/camera.h"
 #include <iostream>
+#include <random>
+#include <chrono>
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -81,6 +83,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 int main()
 {
+    std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+
     if (!glfwInit())
     {
         std::cout << "Failed to initialize GLFW\n";
@@ -196,6 +200,11 @@ int main()
             ImGui::Text("Terrain Seed");
             ImGui::SameLine();
             ImGui::InputInt("##seed", &marchingCubes.seed);
+            ImGui::SameLine();
+            if (ImGui::Button("Random"))
+            {
+                marchingCubes.seed = std::uniform_int_distribution<int>(0, 100000)(rng);
+            }
             ImGui::Separator();
             ImGui::TextDisabled("Press M to toggle this window");
             ImGui::End();

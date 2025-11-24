@@ -23,9 +23,6 @@ private:
 
     FastNoiseLite noise;
 
-    std::vector<float> generateDensityField();
-    std::vector<float> generateSphereDensityField();
-    std::vector<float> generateLandDensityField();
     void createDensitySSBO();
     void uploadMarchingCubesTables();
     void setupShaders();
