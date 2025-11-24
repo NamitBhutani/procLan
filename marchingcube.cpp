@@ -185,7 +185,10 @@ void MarchingCubes::render(Camera camera)
     glUseProgram(computeShader);
     glUniform1i(glGetUniformLocation(computeShader, "gridSize"), GRID_SIZE);
     glUniform1i(glGetUniformLocation(computeShader, "densitySize"), DENSITY_SIZE);
-    glDispatchCompute((GRID_SIZE + 7) / 8, (GRID_SIZE + 7) / 8, (GRID_SIZE + 7) / 8);
+
+    int dispatchSize = DENSITY_SIZE - 1;
+    glDispatchCompute((dispatchSize + 7) / 8, (dispatchSize + 7) / 8, (dispatchSize + 7) / 8);
+
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, counterBuffer);
