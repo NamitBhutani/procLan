@@ -150,6 +150,28 @@ void MarchingCubes::render(Camera camera)
     glUniform1i(glGetUniformLocation(densityComputeShader, "u_Seed"), seed);
     glUniform3f(glGetUniformLocation(densityComputeShader, "u_Offset"), 0.0f, 0.0f, 0.0f);
 
+    // upload cave uniforms
+    int numCaves = (int)std::min((size_t)MAX_CAVES, caves.size());
+    glUniform1i(glGetUniformLocation(densityComputeShader, "u_NumCaves"), numCaves);
+
+    if (numCaves > 0)
+    {
+        std::vector<glm::vec3> offsets;
+        std::vector<float> gains;
+        std::vector<float> freqs;
+
+        for (int i = 0; i < numCaves; ++i)
+        {
+            offsets.push_back(caves[i].offset);
+            gains.push_back(caves[i].gain);
+            freqs.push_back(caves[i].frequency);
+        }
+
+        glUniform3fv(glGetUniformLocation(densityComputeShader, "u_CaveOffsets"), numCaves, (const float *)offsets.data());
+        glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveGains"), numCaves, gains.data());
+        glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveFrequencies"), numCaves, freqs.data());
+    }
+
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
 
     // glDispatchCompute(GRID_SIZE / 8, GRID_SIZE / 8, GRID_SIZE / 8);

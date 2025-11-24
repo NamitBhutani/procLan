@@ -10,6 +10,7 @@ class MarchingCubes
 private:
     static const int GRID_SIZE = 32;
     static const int DENSITY_SIZE = GRID_SIZE + 3;
+
     GLuint densitySSBO;
     GLuint vertexSSBO;
     GLuint edgeTableSSBO;
@@ -23,6 +24,14 @@ private:
 
     FastNoiseLite noise;
 
+    struct Cave
+    {
+        glm::vec3 offset;
+        float gain;
+        float frequency;
+        Cave(const glm::vec3 &o = glm::vec3(0.0f), float g = 1.0f, float f = 0.02f) : offset(o), gain(g), frequency(f) {}
+    };
+
     void createDensitySSBO();
     void uploadMarchingCubesTables();
     void setupShaders();
@@ -35,5 +44,9 @@ public:
     void render(Camera camera);
     void debugComputeShaderOutput();
     void resetVertexCounter();
+
+    static const int MAX_CAVES = 8;
+
     int seed;
+    std::vector<Cave> caves;
 };

@@ -10,6 +10,12 @@ uniform int densitySize;
 uniform int u_Seed;
 uniform vec3 u_Offset;
 
+const int MAX_CAVES = 8;
+uniform int u_NumCaves;
+uniform vec3 u_CaveOffsets[MAX_CAVES];
+uniform float u_CaveGains[MAX_CAVES];
+uniform float u_CaveFrequencies[MAX_CAVES];
+
 void main() {
     uvec3 id = gl_GlobalInvocationID.xyz;
     if (id.x >= densitySize || id.y >= densitySize || id.z >= densitySize) return;
@@ -44,6 +50,21 @@ void main() {
 
     float val = terrainHeight - worldPos.y;
 
-    // todo: sdf cave system goes here
+    // carve caves using multiple Ridged multifractal noise systems
+    for (int i = 0; i < u_NumCaves; ++i)
+    {
+        fnl_state caveNoise = fnlCreateState(u_Seed + i * 431);
+        caveNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+        caveNoise.fractal_type = FNL_FRACTAL_RIDGED;
+        caveNoise.frequency = u_CaveFrequencies[i];
+        caveNoise.octaves = 3;
+
+        vec3 p = worldPos + u_CaveOffsets[i];
+        float caveVal = fnlGetNoise3D(caveNoise, p.x, p.y, p.z);
+
+        if (caveVal > 0.8)
+            val -= caveVal * u_CaveGains[i];
+    }
+
     density[index] = val;
 }

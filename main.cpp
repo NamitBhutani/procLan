@@ -206,6 +206,36 @@ int main()
                 marchingCubes.seed = std::uniform_int_distribution<int>(0, 100000)(rng);
             }
             ImGui::Separator();
+            ImGui::Text("Caves (%d)", (int)marchingCubes.caves.size());
+            for (int i = 0; i < (int)marchingCubes.caves.size(); ++i)
+            {
+                char label[32];
+                snprintf(label, sizeof(label), "Cave %d", i);
+                if (ImGui::TreeNode(label))
+                {
+                    ImGui::Text("Offset");
+                    ImGui::SameLine();
+                    ImGui::InputFloat3("##offset", &marchingCubes.caves[i].offset.x);
+                    ImGui::Text("Gain");
+                    ImGui::SameLine();
+                    ImGui::InputFloat("##gain", &marchingCubes.caves[i].gain);
+                    ImGui::Text("Frequency");
+                    ImGui::SameLine();
+                    ImGui::InputFloat("##frequency", &marchingCubes.caves[i].frequency);
+                    if (ImGui::Button("Remove"))
+                    {
+                        marchingCubes.caves.erase(marchingCubes.caves.begin() + i);
+                        ImGui::TreePop();
+                        break;
+                    }
+                    ImGui::TreePop();
+                }
+            }
+            if (ImGui::Button("Add Cave") && (int)marchingCubes.caves.size() < MarchingCubes::MAX_CAVES)
+            {
+                marchingCubes.caves.emplace_back(glm::vec3(0.0f), 2.0f, 0.05f);
+            }
+            ImGui::Separator();
             ImGui::TextDisabled("Press M to toggle this window");
             ImGui::End();
         }
