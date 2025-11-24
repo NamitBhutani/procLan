@@ -22,15 +22,13 @@ void main() {
 
     uint index = id.x + id.y * densitySize + id.z * densitySize * densitySize;
     
-    // calc World Position for this voxel
     vec3 worldPos = vec3(id) + u_Offset - vec3(1.0);
 
-    // setup warp noise
     fnl_state warpNoise = fnlCreateState(u_Seed);
     warpNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
     warpNoise.domain_warp_type = FNL_DOMAIN_WARP_OPENSIMPLEX2;
     warpNoise.frequency = 0.03;
-    warpNoise.domain_warp_amp = 20;
+    warpNoise.domain_warp_amp = 20.0;
 
     FNLfloat wx = worldPos.x;
     FNLfloat wy = worldPos.y;
@@ -38,19 +36,18 @@ void main() {
     fnlDomainWarp3D(warpNoise, wx, wy, wz);
     vec3 warpedPos = vec3(wx, wy, wz);
 
-    // setup base noise for terrain
-    fnl_state noise = fnlCreateState(u_Seed);
-    noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
-    noise.fractal_type = FNL_FRACTAL_FBM;
-    noise.frequency = 0.02; 
-    noise.octaves = 4;
+    fnl_state terrainNoise = fnlCreateState(u_Seed);
+    terrainNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    terrainNoise.fractal_type = FNL_FRACTAL_FBM;
+    terrainNoise.frequency = 0.02; 
+    terrainNoise.octaves = 4;
 
-    // 2D terrain noise sampled from warped domain
-    float terrainHeight = fnlGetNoise3D(noise, warpedPos.x, 0.0, warpedPos.z) * 20.0 + 10.0;
+    float terrainHeight = fnlGetNoise3D(terrainNoise, warpedPos.x, 0.0, warpedPos.z) * 20.0 + 10.0;
 
-    float val = terrainHeight - worldPos.y;
+    float currentDensity = terrainHeight - worldPos.y;
 
-    // carve caves using multiple Ridged multifractal noise systems
+    float caveThreshold = 0.6;
+
     for (int i = 0; i < u_NumCaves; ++i)
     {
         fnl_state caveNoise = fnlCreateState(u_Seed + i * 431);
@@ -62,9 +59,22 @@ void main() {
         vec3 p = worldPos + u_CaveOffsets[i];
         float caveVal = fnlGetNoise3D(caveNoise, p.x, p.y, p.z);
 
-        if (caveVal > 0.8)
-            val -= caveVal * u_CaveGains[i];
+        float caveSDF = (caveThreshold - caveVal) * u_CaveGains[i] * 10.0;
+        float caveCeiling = 15.0; 
+        float depthBlend = clamp((caveCeiling - worldPos.y) * 0.2, 0.0, 1.0);
+
+        caveSDF = mix(100.0, caveSDF, depthBlend);
+
+        currentDensity = min(currentDensity, caveSDF);
     }
 
-    density[index] = val;
+    // walls and floor around surface
+    if (id.x == 0 || id.x == densitySize - 1 || 
+        id.z == 0 || id.z == densitySize - 1 || 
+        id.y == 0) // floor
+    {
+        currentDensity = -10.0;
+    }
+
+    density[index] = currentDensity;
 }
