@@ -30,6 +30,8 @@ float lastFrame = 0.0f;
 
 bool show_control_window = false;
 bool prev_show_control_window = show_control_window;
+bool wireframe = false;
+bool prevEnter = false;
 
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
@@ -74,6 +76,13 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+    bool currentEnter = glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
+    if (currentEnter && !prevEnter)
+    {
+        wireframe = !wireframe;
+        glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+    }
+    prevEnter = currentEnter;
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
