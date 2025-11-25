@@ -15,6 +15,12 @@ uniform int u_NumCaves;
 uniform vec3 u_CaveOffsets[MAX_CAVES];
 uniform float u_CaveGains[MAX_CAVES];
 uniform float u_CaveFrequencies[MAX_CAVES];
+uniform float u_CaveCeiling;
+
+float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
 
 void main() {
     uvec3 id = gl_GlobalInvocationID.xyz;
@@ -27,8 +33,8 @@ void main() {
     fnl_state warpNoise = fnlCreateState(u_Seed);
     warpNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
     warpNoise.domain_warp_type = FNL_DOMAIN_WARP_OPENSIMPLEX2;
-    warpNoise.frequency = 0.03;
-    warpNoise.domain_warp_amp = 20.0;
+    warpNoise.frequency = 0.005;
+    warpNoise.domain_warp_amp = 5.0;
 
     FNLfloat wx = worldPos.x;
     FNLfloat wy = worldPos.y;
@@ -39,14 +45,13 @@ void main() {
     fnl_state terrainNoise = fnlCreateState(u_Seed);
     terrainNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
     terrainNoise.fractal_type = FNL_FRACTAL_FBM;
-    terrainNoise.frequency = 0.02; 
+    terrainNoise.frequency = 0.01; 
     terrainNoise.octaves = 4;
 
-    float terrainHeight = fnlGetNoise3D(terrainNoise, warpedPos.x, 0.0, warpedPos.z) * 20.0 + 10.0;
-
+    float terrainHeight = fnlGetNoise3D(terrainNoise, warpedPos.x, 0.0, warpedPos.z) * 40.0 + 20.0;
     float currentDensity = terrainHeight - worldPos.y;
 
-    float caveThreshold = 0.6;
+    float caveThreshold = 0.67; 
 
     for (int i = 0; i < u_NumCaves; ++i)
     {
@@ -54,24 +59,27 @@ void main() {
         caveNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
         caveNoise.fractal_type = FNL_FRACTAL_RIDGED;
         caveNoise.frequency = u_CaveFrequencies[i];
-        caveNoise.octaves = 3;
+        caveNoise.octaves = 2; 
 
-        vec3 p = worldPos + u_CaveOffsets[i];
+        vec3 p = warpedPos + u_CaveOffsets[i];
         float caveVal = fnlGetNoise3D(caveNoise, p.x, p.y, p.z);
 
-        float caveSDF = (caveThreshold - caveVal) * u_CaveGains[i] * 10.0;
-        float caveCeiling = 15.0; 
-        float depthBlend = clamp((caveCeiling - worldPos.y) * 0.2, 0.0, 1.0);
+        float caveSDF = (caveThreshold - caveVal) * u_CaveGains[i] * 2.0;
+        float heightMask = clamp((u_CaveCeiling - worldPos.y) * 0.15, 0.0, 1.0);
 
-        caveSDF = mix(100.0, caveSDF, depthBlend);
+        caveSDF = mix(100.0, caveSDF, heightMask);
 
-        currentDensity = min(currentDensity, caveSDF);
+        currentDensity = smin(currentDensity, caveSDF, 4.0);
+    }
+
+    if (id.y < 3) { 
+        currentDensity = 100.0; // bedrock
     }
 
     // walls and floor around surface
     if (id.x == 0 || id.x == densitySize - 1 || 
         id.z == 0 || id.z == densitySize - 1 || 
-        id.y == 0) // floor
+        id.y == 0)
     {
         currentDensity = -10.0;
     }

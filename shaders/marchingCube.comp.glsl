@@ -56,15 +56,26 @@ vec3 computeNormal(int x, int y, int z) {
     float dX = getDensity(x - 1, y, z) - getDensity(x + 1, y, z);
     float dY = getDensity(x, y - 1, z) - getDensity(x, y + 1, z);
     float dZ = getDensity(x, y, z - 1) - getDensity(x, y, z + 1);
-    return normalize(vec3(dX, dY, dZ));
+    vec3 n = vec3(dX, dY, dZ);
+    
+    if (length(n) < 0.0001) {
+        return vec3(0.0, 1.0, 0.0);
+    }
+    return normalize(n);
 }
 
 vec3 interpolateNormal(vec3 normal0, vec3 normal1, float val0, float val1) {
-if(abs(isoLevel - val0) < 0.00001) return normal0;
-if(abs(isoLevel - val1) < 0.00001) return normal1;
-if(abs(val0 - val1) < 0.00001) return normal0;
-float t = (isoLevel - val0) / (val1 - val0);
-return normalize(mix(normal0, normal1, t));
+    if(abs(isoLevel - val0) < 0.00001) return normal0;
+    if(abs(isoLevel - val1) < 0.00001) return normal1;
+    if(abs(val0 - val1) < 0.00001) return normal0;
+    
+    float t = (isoLevel - val0) / (val1 - val0);
+    vec3 n = mix(normal0, normal1, t);
+    
+    if (length(n) < 0.0001) {
+        return normal0;
+    }
+    return normalize(n);
 }
 
 void main() {

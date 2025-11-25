@@ -20,7 +20,7 @@ struct VertexNormal
 MarchingCubes::MarchingCubes()
     : densitySSBO(0), vertexSSBO(0), edgeTableSSBO(0), triTableSSBO(0), normalSSBO(0),
       counterBuffer(0), densityComputeShader(0),
-      computeShader(0), renderShader(0), VAO(0), seed(12345)
+      computeShader(0), renderShader(0), VAO(0), seed(999)
 {
 }
 
@@ -149,6 +149,7 @@ void MarchingCubes::render(Camera camera)
     glUniform1i(glGetUniformLocation(densityComputeShader, "densitySize"), DENSITY_SIZE);
     glUniform1i(glGetUniformLocation(densityComputeShader, "u_Seed"), seed);
     glUniform3f(glGetUniformLocation(densityComputeShader, "u_Offset"), 0.0f, 0.0f, 0.0f);
+    glUniform1f(glGetUniformLocation(densityComputeShader, "u_CaveCeiling"), caveCeiling);
 
     // upload cave uniforms
     int numCaves = (int)std::min((size_t)MAX_CAVES, caves.size());

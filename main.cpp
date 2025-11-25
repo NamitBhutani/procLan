@@ -207,6 +207,9 @@ int main()
             }
             ImGui::Separator();
             ImGui::Text("Caves (%d)", (int)marchingCubes.caves.size());
+            ImGui::Separator();
+            ImGui::Text("Terrain Settings");
+            ImGui::SliderFloat("Cave Ceiling", &marchingCubes.caveCeiling, 0.0f, 60.0f);
             for (int i = 0; i < (int)marchingCubes.caves.size(); ++i)
             {
                 char label[32];
@@ -233,7 +236,7 @@ int main()
             }
             if (ImGui::Button("Add Cave") && (int)marchingCubes.caves.size() < MarchingCubes::MAX_CAVES)
             {
-                marchingCubes.caves.emplace_back(glm::vec3(0.0f), 2.0f, 0.05f);
+                marchingCubes.caves.emplace_back(glm::vec3(0.0f), 0.5f, 0.04f);
             }
             ImGui::Separator();
             ImGui::TextDisabled("Press M to toggle this window");

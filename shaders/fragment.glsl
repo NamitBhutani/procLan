@@ -31,10 +31,18 @@ void main() {
     }
 
     float up = norm.y * 0.5 + 0.5;
-    vec3 ambient = mix(vec3(0.2, 0.18, 0.15), vec3(0.6, 0.7, 0.8), up) * 0.5;
+    vec3 groundColor = vec3(0.4, 0.35, 0.3); 
+    vec3 skyColor    = vec3(0.6, 0.7, 0.8);
+    
+    vec3 ambient = mix(groundColor, skyColor, up);
+    float caveBoost = 1.0 - smoothstep(5.0, 30.0, fragPos.y);
+    ambient += vec3(0.15, 0.12, 0.1) * caveBoost;
 
-    float NdotL = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = NdotL * vec3(1.0, 0.98, 0.9); 
+    ambient *= 0.8;
+    float NdotL = dot(norm, lightDir);
+    float diff = NdotL * 0.5 + 0.5; 
+    diff = diff * diff;
+    vec3 diffuse = diff * vec3(1.0, 0.98, 0.9);
 
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
@@ -43,8 +51,7 @@ void main() {
     vec3 lighting = (ambient + diffuse + specular) * terrainColor;
 
     float dist = length(viewPos - fragPos);
-    float fogFactor = smoothstep(10.0, 180.0, dist);
-    
+    float fogFactor = smoothstep(60.0, 180.0, dist);
     vec3 finalColor = mix(lighting, SKY_COLOR, fogFactor);
 
     FragColor = vec4(finalColor, 1.0);

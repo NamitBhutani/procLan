@@ -49,4 +49,5 @@ public:
 
     int seed;
     std::vector<Cave> caves;
+    float caveCeiling = 25.0f;
 };
