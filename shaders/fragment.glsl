@@ -51,7 +51,7 @@ void main() {
     vec3 lighting = (ambient + diffuse + specular) * terrainColor;
 
     float dist = length(viewPos - fragPos);
-    float fogFactor = smoothstep(60.0, 180.0, dist);
+    float fogFactor = smoothstep(150.0, 250.0, dist);
     vec3 finalColor = mix(lighting, SKY_COLOR, fogFactor);
 
     FragColor = vec4(finalColor, 1.0);

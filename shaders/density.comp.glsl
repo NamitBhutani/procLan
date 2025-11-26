@@ -16,6 +16,7 @@ uniform vec3 u_CaveOffsets[MAX_CAVES];
 uniform float u_CaveGains[MAX_CAVES];
 uniform float u_CaveFrequencies[MAX_CAVES];
 uniform float u_CaveZoneFrequencies[MAX_CAVES];
+uniform float u_CaveZoneThreshold[MAX_CAVES];
 uniform float u_CaveCeiling;
 
 float smin(float a, float b, float k) {
@@ -76,8 +77,7 @@ void main() {
         float heightMask = clamp((u_CaveCeiling - worldPos.y) * 0.15, 0.0, 1.0);
 
         float zoneVal = fnlGetNoise3D(zoneNoise, p.x, p.y, p.z);
-        float zoneMask = smoothstep(0.45, 0.55, zoneVal * 0.5 + 0.5);
-
+        float zoneMask = smoothstep(u_CaveZoneThreshold[i] - 0.05, u_CaveZoneThreshold[i] + 0.05, zoneVal * 0.5 + 0.5);
         float finalMask = zoneMask * heightMask;
         caveSDF = mix(100.0, caveSDF, finalMask);
 

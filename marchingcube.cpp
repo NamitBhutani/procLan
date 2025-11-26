@@ -161,6 +161,7 @@ void MarchingCubes::render(Camera camera)
         std::vector<float> gains;
         std::vector<float> freqs;
         std::vector<float> zoneFreqs;
+        std::vector<float> zoneThresholds;
 
         for (int i = 0; i < numCaves; ++i)
         {
@@ -168,12 +169,14 @@ void MarchingCubes::render(Camera camera)
             gains.push_back(caves[i].gain);
             freqs.push_back(caves[i].frequency);
             zoneFreqs.push_back(caves[i].zoneFrequency);
+            zoneThresholds.push_back(caves[i].zoneThreshold);
         }
 
         glUniform3fv(glGetUniformLocation(densityComputeShader, "u_CaveOffsets"), numCaves, (const float *)offsets.data());
         glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveGains"), numCaves, gains.data());
         glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveFrequencies"), numCaves, freqs.data());
         glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveZoneFrequencies"), numCaves, zoneFreqs.data());
+        glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveZoneThreshold"), numCaves, zoneThresholds.data());
     }
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);

@@ -195,7 +195,7 @@
 	<body>
 		<div class="container">
 			<header>
-				<h1>Interactive Free Tree Visualization in OpenGL</h1>
+				<h1>Interactive Procedural Terrain and Cave Generator in OpenGL</h1>
 				<p>
 					<strong class="highlight">Namit Bhutani</strong>
 					(2022B3A70885H),
@@ -440,7 +440,7 @@
 							multiple cave layers, with each cave having an
 							offset, gain and frequency. These are passed as
 							uniforms from the host (`u_CaveOffsets`,
-							`u_CaveGains`, `u_CaveFrequencies`, and
+							`u_CaveGains`, `u_CaveFrequencies`, `u_CaveZoneThreshold`, and
 							`u_NumCaves`) and combined with the base noise to
 							carve tunnels and hollow regions. A
 							<code>u_CaveCeiling</code> parameter is used to

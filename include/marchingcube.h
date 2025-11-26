@@ -30,6 +30,7 @@ private:
         float gain;
         float frequency;
         float zoneFrequency;
+        float zoneThreshold = 0.5f;
         Cave(const glm::vec3 &o = glm::vec3(0.0f, -40.0f, 0.0f), float g = 2.0f, float f = 0.01f, float zf = 0.002f) : offset(o), gain(g), frequency(f), zoneFrequency(zf) {}
     };
 

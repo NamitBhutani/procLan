@@ -16,7 +16,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(-80.0f, 80.0f, 80.0f));
+Camera camera(glm::vec3(160.0f, 90.0f, 100.0f), glm::vec3(0.0f, 1.0f, 0.0f), -150.0f, -30.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -237,6 +237,9 @@ int main()
                     ImGui::Text("Zone Frequency");
                     ImGui::SameLine();
                     ImGui::InputFloat("##zonefreq", &marchingCubes.caves[i].zoneFrequency);
+                    ImGui::Text("Zone Threshold");
+                    ImGui::SameLine();
+                    ImGui::SliderFloat("##zonethreshold", &marchingCubes.caves[i].zoneThreshold, 0.0f, 1.0f);
                     if (ImGui::Button("Remove"))
                     {
                         marchingCubes.caves.erase(marchingCubes.caves.begin() + i);
