@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>
+			Project Documentation: User-Controlled Terrain Generation with
+			Procedural Caves
+		</title>
+		<style>
+			/* Catppuccin Mocha Theme */
+			:root {
+				--rosewater: #f5e0dc;
+				--flamingo: #f2cdcd;
+				--pink: #f5c2e7;
+				--mauve: #cba6f7;
+				--red: #f38ba8;
+				--maroon: #eba0ac;
+				--peach: #fab387;
+				--yellow: #f9e2af;
+				--green: #a6e3a1;
+				--teal: #94e2d5;
+				--sky: #89dceb;
+				--sapphire: #74c7ec;
+				--blue: #89b4fa;
+				--lavender: #b4befe;
+				--text: #cdd6f4;
+				--subtext1: #bac2de;
+				--subtext0: #a6adc8;
+				--overlay2: #9399b2;
+				--overlay1: #7f849c;
+				--overlay0: #6c7086;
+				--surface2: #585b70;
+				--surface1: #45475a;
+				--surface0: #313244;
+				--base: #1e1e2e;
+				--mantle: #181825;
+				--crust: #11111b;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+					Roboto, Helvetica, Arial, sans-serif;
+				line-height: 1.6;
+				color: var(--text);
+				background-color: var(--base);
+				margin: 0;
+				padding: 0;
+			}
+
+			.container {
+				max-width: 900px;
+				margin: 20px auto;
+				padding: 20px;
+				background-color: var(--mantle);
+				border: 1px solid var(--surface0);
+				border-radius: 8px;
+			}
+
+			header {
+				background-color: var(--crust);
+				color: var(--text);
+				padding: 20px;
+				border-radius: 5px 5px 0 0;
+				text-align: center;
+			}
+
+			header p {
+				color: var(--subtext1);
+			}
+
+			h1 {
+				color: var(--mauve);
+				margin: 0;
+			}
+
+			h2 {
+				color: var(--teal);
+				border-bottom: 2px solid var(--teal);
+				padding-bottom: 10px;
+				margin-top: 40px;
+			}
+
+			h3 {
+				color: var(--peach);
+				border-bottom: 1px solid var(--surface1);
+				padding-bottom: 5px;
+			}
+
+			code {
+				background-color: var(--surface0);
+				padding: 3px 6px;
+				border-radius: 4px;
+				font-family: "Courier New", Courier, monospace;
+				color: var(--red);
+			}
+
+			ul li {
+				margin-bottom: 10px;
+			}
+
+			.highlight {
+				font-weight: bold;
+				color: var(--blue);
+			}
+
+			footer {
+				text-align: center;
+				margin-top: 30px;
+				font-size: 0.9em;
+				color: var(--subtext0);
+			}
+
+			table {
+				width: 100%;
+				max-width: 100%;
+				border-collapse: separate;
+				border-spacing: 0;
+				margin-top: 16px;
+				background-color: transparent;
+				box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+				border-radius: 8px;
+				overflow: hidden;
+			}
+
+			table caption {
+				caption-side: top;
+				color: var(--subtext1);
+				font-weight: 600;
+				padding: 10px 12px;
+			}
+
+			table thead th {
+				background: linear-gradient(
+					180deg,
+					var(--surface1),
+					var(--surface2)
+				);
+				color: var(--text);
+				font-weight: 700;
+				padding: 12px 14px;
+				text-align: left;
+				border-bottom: 1px solid var(--surface0);
+				position: sticky;
+				top: 0;
+				z-index: 2;
+			}
+
+			table tbody td {
+				padding: 10px 14px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+				color: var(--subtext1);
+				vertical-align: middle;
+			}
+
+			table tbody tr:nth-child(even) {
+				background-color: rgba(255, 255, 255, 0.02);
+			}
+
+			table tbody tr:hover {
+				background-color: rgba(149, 153, 178, 0.06);
+			}
+
+			table th code,
+			table td code {
+				background: transparent;
+				color: var(--pink);
+				padding: 0;
+				font-size: 0.95em;
+			}
+
+			img {
+				width: 100%;
+				border-radius: 8px;
+				border-color: #6c7086;
+				border-style: solid;
+				border-width: 1px;
+				margin-top: 10px;
+				margin-bottom: 10px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+			}
+
+			figure {
+				padding: 4px;
+				margin: auto;
+			}
+
+			figcaption {
+				color: var(--peach);
+				font-style: italic;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<header>
+				<h1>Interactive Free Tree Visualization in OpenGL</h1>
+				<p>
+					<strong class="highlight">Namit Bhutani</strong>
+					(2022B3A70885H),
+					<strong class="highlight">Karthik Prakash</strong>
+					(2022A7PS0022H)
+				</p>
+			</header>
+
+			<main>
+				<section>
+					<h2>Project Overview</h2>
+					<img
+						src="assets/main.png"
+						alt="Screenshot of the application"
+					/>
+					<p>
+						This is a OpenGL-based procedural terrain and cave
+						generator that utilizes noise-based 3D density fields
+						and the Marching Cubes algorithm for rendering. For
+						better visuals, basic Phong lighting along with
+						volumetric fog effects are also implemented.
+					</p>
+					<p>
+						It uses compute shaders for GPU-accelerated performance
+						along with a lightweight ImGui-driven viewer that lets
+						you fly around the scene, tweak noise seeds and edit
+						procedural caves in real time.
+					</p>
+				</section>
+
+				<section>
+					<h2>Features</h2>
+
+					<h3>Terrain Generation</h3>
+					<ul>
+						<li>
+							<strong class="highlight"
+								>Seed-Based Noise Generation:</strong
+							>
+							Procedural terrain generated using 3D simplex noise
+							with user-defined seed for variability.
+						</li>
+						<li>
+							<strong class="highlight"
+								>User-Controlled Caves:</strong
+							>
+							Add, remove, and modify caves with real-time
+							parameters (position, size, frequency).
+						</li>
+						<li>
+							<strong class="highlight"
+								>Multiple Layers of Noise:</strong
+							>
+							While the base terrain uses a simplex-based noise,
+							the caves use ridged multifractal noise for more
+							organic shapes.
+						</li>
+					</ul>
+
+					<h3>User Interface</h3>
+					<ul>
+						<li>
+							<strong class="highlight"
+								>ImGui Integration:</strong
+							>
+							Intuitive GUI for real-time parameter tweaking.
+						</li>
+						<li>
+							<strong class="highlight">Camera Controls:</strong>
+							Fly-through camera with WASD + mouse look for
+							exploration.
+						</li>
+						<li>
+							<strong class="highlight">Wireframe Mode:</strong>
+							Toggle wireframe rendering for mesh visualization.
+						</li>
+						<li>
+							<strong class="highlight"
+								>Real-Time Updates:</strong
+							>
+							Changes to cave parameters and noise settings update
+							the terrain instantly.
+						</li>
+					</ul>
+
+					<h3>Visual Effects</h3>
+					<ul>
+						<li>
+							<strong class="highlight"
+								>Height-Based Colouring:</strong
+							>
+							Terrain colors vary based on height for visual
+							depth.
+						</li>
+						<li>
+							<strong class="highlight">Phong Lighting:</strong>
+							Real-time lighting calculations in the fragment
+							shader for realistic surface illumination.
+						</li>
+						<li>
+							<strong class="highlight">Volumetric Fog:</strong>
+							Distance-based fog effect to enhance depth
+							perception.
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>References and Libraries</h2>
+					<ul>
+						<li>
+							<strong>Marching Cubes:</strong> An algorithm for
+							extracting the isosurface mesh of a 3D density field
+							from the paper
+							<strong class="highlight"
+								>Marching cubes: A high resolution 3D surface
+								construction algorithm</strong
+							>
+							by Lorensen and Cline.
+						</li>
+						<li>
+							<strong>OpenGL:</strong> The core graphics API used
+							for rendering.
+						</li>
+						<li>
+							<strong>GLFW:</strong> A multiplatform library for
+							creating windows, contexts, and managing input.
+						</li>
+						<li>
+							<strong>GLAD:</strong> An OpenGL Loading Library
+							used to access modern OpenGL functions.
+						</li>
+						<li>
+							<strong>ImGui:</strong> A bloat free GUI library for
+							C++.
+						</li>
+						<li>
+							<strong>FastNoiseLite:</strong> Noise implementation
+							used in <code>shaders/FastNoiseLite.glsl</code> for
+							terrain & cave density fields.
+						</li>
+						<li>
+							<strong>CMake:</strong> A cross-platform build
+							system used to manage the build process.
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Project Structure</h2>
+					<table>
+						<caption>
+							Important files and directories
+						</caption>
+						<thead>
+							<tr>
+								<th>Path</th>
+								<th>Purpose</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><code>main.cpp</code></td>
+								<td>
+									Application entry, GLFW/ImGui and main loop
+									(camera, input, UI).
+								</td>
+							</tr>
+							<tr>
+								<td><code>marchingcube.cpp</code></td>
+								<td>
+									MarchingCubes class: sets up SSBOs, compiles
+									shaders, dispatches compute shaders and
+									renders the resulting SSBO mesh.
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<code>tritable.cpp</code>,
+									<code>edgetable.cpp</code>
+								</td>
+								<td>
+									Lookup tables for Marching Cubes (exported
+									as vectors and uploaded to SSBOs).
+								</td>
+							</tr>
+							<tr>
+								<td><code>include/</code></td>
+								<td>
+									Headers: <code>marchingcube.h</code>,
+									<code>camera.h</code>,
+									<code>shader.h</code>, and noise /
+									shader-related includes.
+								</td>
+							</tr>
+							<tr>
+								<td><code>shaders/</code></td>
+								<td>
+									GLSL shaders (compute and render):
+									<code>density.comp.glsl</code>,
+									<code>marchingCube.comp.glsl</code>,
+									<code>vertex.glsl</code>,
+									<code>fragment.glsl</code>, and
+									<code>FastNoiseLite.glsl</code>.
+								</td>
+							</tr>
+							<tr>
+								<td><code>glad/</code>, <code>imgui/</code></td>
+								<td>
+									Vendored libraries for OpenGL loading and
+									GUI.
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</section>
+
+				<section>
+					<h2>Algorithms Used</h2>
+					<h3>3D Noise Generation</h3>
+					<p>
+						Density values are generated entirely on the GPU into a
+						3D grid (the
+						<code>densitySSBO</code>) by
+						<code>shaders/density.comp.glsl</code>. The shader uses
+						the FastNoiseLite implementation included via
+						<code>shaders/FastNoiseLite.glsl</code> and writes a
+						floating-point density for every grid point. Those
+						density samples are later sampled by the Marching Cubes
+						compute shader to determine cube corner signs/isosurface
+						intersections.
+					</p>
+					<ul>
+						<li>
+							<strong>Seed & determinism:</strong> A uniform seed
+							(`u_Seed`) is passed into the density shader so
+							results are deterministic and reproducible across
+							runs for the same seed.
+						</li>
+						<li>
+							<strong>Cave layering:</strong> The shader supports
+							multiple cave layers, with each cave having an
+							offset, gain and frequency. These are passed as
+							uniforms from the host (`u_CaveOffsets`,
+							`u_CaveGains`, `u_CaveFrequencies`, and
+							`u_NumCaves`) and combined with the base noise to
+							carve tunnels and hollow regions. A
+							<code>u_CaveCeiling</code> parameter is used to
+							restrict cave generation to below a certain height.
+						</li>
+						<li>
+							<strong>Combining fields:</strong> The density
+							shader composes the base terrain noise and cave
+							contributions (via gains/frequencies) into a single
+							scalar density value per voxel. The marching shader
+							reads these values and applies its isovalue test to
+							produce triangles.
+						</li>
+						<li>
+							<strong>Tuning:</strong> Parameters exposed in the
+							UI include the seed, per-cave gain/frequency/offset,
+							and the cave ceiling. These allow users to quickly
+							tweak the terrain without recompiling shaders.
+						</li>
+					</ul>
+
+					<h3>Marching Cubes</h3>
+					<p>
+						The project implements Marching Cubes entirely on the
+						GPU using a compute shader pipeline. Density is first
+						produced into a 3D grid by a dedicated compute shader
+						(<code>shaders/density.comp.glsl</code>), then the mesh
+						is extracted by
+						<code>shaders/marchingCube.comp.glsl</code>
+						and written straight into GPU-side buffers (SSBOs) for
+						rendering.
+					</p>
+					<ul>
+						<li>
+							<strong>Shader pipeline:</strong> Density generation
+							uses <code>density.comp.glsl</code>. Mesh extraction
+							runs in <code>marchingCube.comp.glsl</code>. Final
+							rendering uses <code>vertex.glsl</code> and
+							<code>fragment.glsl</code>.
+						</li>
+						<li>
+							<strong>Lookup tables:</strong> The classic Marching
+							Cubes tables are stored in
+							<code>tritable.cpp</code> and
+							<code>edgetable.cpp</code> and uploaded to SSBOs at
+							runtime. These tables drive the per-cell
+							edge/triangle generation in the compute shader.
+						</li>
+						<li>
+							<strong>Vertex streaming:</strong> The compute
+							shader atomically appends vertices into the
+							<code>vertexSSBO</code> using the counter buffer.
+							The host code resets the counter via
+							<code>resetVertexCounter()</code> before dispatch
+							and reads the final count with
+							<code>glGetBufferSubData</code> to drive
+							<code>glDrawArrays</code>.
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Issues and Coding Challenges</h2>
+					<ul>
+						<li>
+							<strong class="highlight"
+								>Tuning Default Parameters:</strong
+							>
+							Noise frequencies, amplitudes, cave gains and the
+							marching isovalue interact in subtle ways, so a set
+							of values that looks good at one grid resolution or
+							on one GPU can look wrong on another.
+						</li>
+						<li>
+							<strong class="highlight">Race Conditions:</strong>
+							Missing or incorrect
+							<code>glMemoryBarrier</code> calls led to
+							hard-to-reproduce rendering artifacts or race
+							conditions when the Marching Cubes shader read
+							density data that had not finished writing. We added
+							explicit barriers and readback checks (vertex count
+							validation) to reliably detect and avoid these
+							issues.
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Screenshots</h2>
+					<figure>
+						<img src="assets/terrain.png" alt="Main view" />
+						<figcaption>
+							Generated terrain without caves.
+						</figcaption>
+					</figure>
+					<figure>
+						<img src="assets/wireframe.png" alt="Main view" />
+						<figcaption>
+							Wireframe mode for mesh structure visualization.
+						</figcaption>
+					</figure>
+					<figure style="width: 50%">
+						<img src="assets/gui.png" alt="GUI view" />
+						<figcaption>
+							ImGui interface for real-time parameter tweaking.
+						</figcaption>
+					</figure>
+				</section>
+			</main>
+		</div>
+	</body>
+</html>
