@@ -63,7 +63,7 @@ void main() {
         caveNoise.octaves = 2; 
 
         // low-frequency zone noise to cluster caves
-        fnl_state zoneNoise = fnlCreateState(u_Seed + 9999);
+        fnl_state zoneNoise = fnlCreateState(u_Seed + 9999 + i * 131);
         zoneNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
         zoneNoise.fractal_type = FNL_FRACTAL_FBM;
         zoneNoise.frequency = u_CaveZoneFrequencies[i];
@@ -72,7 +72,7 @@ void main() {
         vec3 p = warpedPos + u_CaveOffsets[i];
         float caveVal = fnlGetNoise3D(caveNoise, p.x, p.y, p.z);
 
-        float caveSDF = (caveThreshold - caveVal) * u_CaveGains[i] * 2.0;
+        float caveSDF = (caveThreshold - caveVal) * u_CaveGains[i] * 2.0 * u_NumCaves * u_NumCaves;
         float heightMask = clamp((u_CaveCeiling - worldPos.y) * 0.15, 0.0, 1.0);
 
         float zoneVal = fnlGetNoise3D(zoneNoise, p.x, p.y, p.z);
