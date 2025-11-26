@@ -29,7 +29,7 @@ private:
         glm::vec3 offset;
         float gain;
         float frequency;
-        Cave(const glm::vec3 &o = glm::vec3(0.0f), float g = 1.0f, float f = 0.02f) : offset(o), gain(g), frequency(f) {}
+        Cave(const glm::vec3 &o = glm::vec3(0.0f, -40.0f, 0.0f), float g = 0.5f, float f = 0.01f) : offset(o), gain(g), frequency(f) {}
     };
 
     void createDensitySSBO();
@@ -49,5 +49,5 @@ public:
 
     int seed;
     std::vector<Cave> caves;
-    float caveCeiling = 25.0f;
+    float caveCeiling = 20.0f;
 };

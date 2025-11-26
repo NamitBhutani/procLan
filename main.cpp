@@ -16,7 +16,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 40.0f, 40.0f));
+Camera camera(glm::vec3(-80.0f, 80.0f, 80.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -214,11 +214,11 @@ int main()
             {
                 marchingCubes.seed = std::uniform_int_distribution<int>(0, 100000)(rng);
             }
+            ImGui::Text("Cave Ceiling");
+            ImGui::SameLine();
+            ImGui::SliderFloat("##ceiling", &marchingCubes.caveCeiling, 0.0f, 60.0f);
             ImGui::Separator();
             ImGui::Text("Caves (%d)", (int)marchingCubes.caves.size());
-            ImGui::Separator();
-            ImGui::Text("Terrain Settings");
-            ImGui::SliderFloat("Cave Ceiling", &marchingCubes.caveCeiling, 0.0f, 60.0f);
             for (int i = 0; i < (int)marchingCubes.caves.size(); ++i)
             {
                 char label[32];
@@ -245,10 +245,11 @@ int main()
             }
             if (ImGui::Button("Add Cave") && (int)marchingCubes.caves.size() < MarchingCubes::MAX_CAVES)
             {
-                marchingCubes.caves.emplace_back(glm::vec3(0.0f), 0.5f, 0.04f);
+                marchingCubes.caves.emplace_back();
             }
             ImGui::Separator();
             ImGui::TextDisabled("Press M to toggle this window");
+            ImGui::TextDisabled("Press ENTER to toggle wireframe mode");
             ImGui::End();
         }
 
