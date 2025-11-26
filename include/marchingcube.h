@@ -29,7 +29,8 @@ private:
         glm::vec3 offset;
         float gain;
         float frequency;
-        Cave(const glm::vec3 &o = glm::vec3(0.0f, -40.0f, 0.0f), float g = 0.5f, float f = 0.01f) : offset(o), gain(g), frequency(f) {}
+        float zoneFrequency;
+        Cave(const glm::vec3 &o = glm::vec3(0.0f, -40.0f, 0.0f), float g = 0.5f, float f = 0.01f, float zf = 0.002f) : offset(o), gain(g), frequency(f), zoneFrequency(zf) {}
     };
 
     void createDensitySSBO();

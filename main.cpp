@@ -234,6 +234,9 @@ int main()
                     ImGui::Text("Frequency");
                     ImGui::SameLine();
                     ImGui::InputFloat("##frequency", &marchingCubes.caves[i].frequency);
+                    ImGui::Text("Zone Frequency");
+                    ImGui::SameLine();
+                    ImGui::InputFloat("##zonefreq", &marchingCubes.caves[i].zoneFrequency);
                     if (ImGui::Button("Remove"))
                     {
                         marchingCubes.caves.erase(marchingCubes.caves.begin() + i);

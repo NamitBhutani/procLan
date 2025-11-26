@@ -160,17 +160,20 @@ void MarchingCubes::render(Camera camera)
         std::vector<glm::vec3> offsets;
         std::vector<float> gains;
         std::vector<float> freqs;
+        std::vector<float> zoneFreqs;
 
         for (int i = 0; i < numCaves; ++i)
         {
             offsets.push_back(caves[i].offset);
             gains.push_back(caves[i].gain);
             freqs.push_back(caves[i].frequency);
+            zoneFreqs.push_back(caves[i].zoneFrequency);
         }
 
         glUniform3fv(glGetUniformLocation(densityComputeShader, "u_CaveOffsets"), numCaves, (const float *)offsets.data());
         glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveGains"), numCaves, gains.data());
         glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveFrequencies"), numCaves, freqs.data());
+        glUniform1fv(glGetUniformLocation(densityComputeShader, "u_CaveZoneFrequencies"), numCaves, zoneFreqs.data());
     }
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, densitySSBO);
