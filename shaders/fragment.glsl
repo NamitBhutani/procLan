@@ -38,7 +38,7 @@ void main() {
     float caveBoost = 1.0 - smoothstep(5.0, 30.0, fragPos.y);
     ambient += vec3(0.15, 0.12, 0.1) * caveBoost;
 
-    ambient *= 0.8;
+    ambient *= 0.5;
     float NdotL = dot(norm, lightDir);
     float diff = NdotL * 0.5 + 0.5; 
     diff = diff * diff;
