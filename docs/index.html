@@ -304,6 +304,28 @@
 				</section>
 
 				<section>
+					<h2>Controls</h2>
+					<ul>
+						<li>
+							<strong class="highlight">W, A, S, D:</strong> Move
+							camera forward, left, backward, and right.
+						</li>
+						<li>
+							<strong class="highlight">Mouse:</strong> Rotate
+							camera view.
+						</li>
+						<li>
+							<strong class="highlight">Q / E:</strong> Move
+							camera up / down.
+						</li>
+						<li>
+							<strong class="highlight">Left Ctrl / Esc:</strong> Toggle
+							mouse cursor visibility (to interact with UI).
+						</li>
+					</ul>
+				</section>
+
+				<section>
 					<h2>References and Libraries</h2>
 					<ul>
 						<li>
@@ -315,6 +337,12 @@
 								construction algorithm</strong
 							>
 							by Lorensen and Cline.
+						</li>
+						<li>
+							<strong>Function Representation:</strong> Foundational concepts in geometric modeling from the paper
+							<a href="https://papers.cumincad.org/data/works/att/d935.content.pdf">
+								<strong class="highlight">Function Representation in Geometric Modeling: Concepts, Implementation and Applications</strong>
+							</a>.
 						</li>
 						<li>
 							<strong>OpenGL:</strong> The core graphics API used
@@ -500,6 +528,32 @@
 							<code>glDrawArrays</code>.
 						</li>
 					</ul>
+
+					<h3>Technical Highlights</h3>
+					<ul>
+						<li>
+							<strong class="highlight">Domain Warping:</strong>
+							To create more natural, fluid-like terrain features,
+							we apply domain warping to the noise coordinates.
+							This distorts the space before sampling the density,
+							resulting in twisted and organic shapes.
+						</li>
+						<li>
+							<strong class="highlight">Smooth Blending:</strong>
+							Caves are blended into the terrain using a smooth
+							minimum function (<code>smin</code>). This prevents
+							harsh intersections and creates seamless transitions
+							between tunnels and the surrounding rock.
+						</li>
+						<li>
+							<strong class="highlight">Custom Lighting:</strong>
+							The fragment shader implements a hemispheric ambient
+							light model combined with a wrapped diffuse term.
+							This provides softer, more natural lighting compared
+							to standard Phong shading, especially for organic
+							terrain shapes.
+						</li>
+					</ul>
 				</section>
 
 				<section>
@@ -524,6 +578,35 @@
 							explicit barriers and readback checks (vertex count
 							validation) to reliably detect and avoid these
 							issues.
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Future Improvements</h2>
+					<ul>
+						<li>
+							<strong class="highlight">Level of Detail (LOD):</strong>
+							Implementing a chunk-based system or dynamic LOD to
+							support infinite terrain generation and improve
+							performance on larger grids.
+						</li>
+						<li>
+							<strong class="highlight">Triplanar Texturing:</strong>
+							Applying textures based on world-space coordinates
+							and normal orientation to avoid UV mapping artifacts
+							on complex procedural geometry.
+						</li>
+						<li>
+							<strong class="highlight">Biomes:</strong>
+							Varying noise parameters and colors based on
+							position to create distinct biomes (e.g., deserts,
+							forests, snowy peaks).
+						</li>
+						<li>
+							<strong class="highlight">Shadow Mapping:</strong>
+							Implementing shadow mapping for more realistic
+							depth perception and lighting.
 						</li>
 					</ul>
 				</section>
