@@ -1,47 +1,44 @@
-# procLan: Procedural Terrain Generator
+# Procedural Terrain Generator with User-Defined Caves
 
-`procLan` is a GPU-accelerated procedural terrain generation system using the Marching Cubes algorithm. It's implemented in C++ and modern OpenGL, using compute shaders to extract and render 3D isosurfaces from a noise field in real-time.
+_Made by Namit Bhutani (2022B3A70885H) and Karthik Prakash (2022A7PS0022H)_
 
-## Features
+This is a OpenGL-based procedural terrain and cave
+generator that utilizes noise-based 3D density fields
+and the Marching Cubes algorithm for rendering. For
+better visuals, basic Phong lighting along with
+volumetric fog effects are also implemented.
 
-  * **GPU-Accelerated:** Renders 100K+ polygon meshes at over 60 FPS by offloading work to the GPU.
-  * **Marching Cubes:** Implements the Marching Cubes algorithm in a compute shader for efficient isosurface extraction.
-  * **3D Viewer:** Includes an interactive 3D viewer with:
-      * Phong lighting model
-      * Wireframe rendering mode
-      * Free-fly camera controls
+It uses compute shaders for GPU-accelerated performance
+along with a lightweight ImGui-driven viewer that lets
+you fly around the scene, tweak noise seeds and edit
+procedural caves in real time.
 
------
+![Main](docs/assets/main.png)
 
-## Technical Details
+For more details, refer to the docs [here](docs/index.html).
 
-This project uses a compute-shader-based pipeline to minimize CPU overhead.
+## Technologies & Libraries Used
 
-1.  A **compute shader** runs the Marching Cubes algorithm on a Perlin noise field, calculating vertex positions and normals.
-2.  The resulting mesh data is written to an **optimized Shader Storage Buffer Object (SSBO)**.
-3.  The vertex shader reads directly from the SSBO for rendering, eliminating the need for slow CPU read-back.
-4.  The fragment shader applies per-fragment **Phong lighting** for a smooth, shaded appearance.
+-   **Language:** C++
+-   **Graphics API:** OpenGL
+-   **Windowing & Input:** GLFW
+-   **OpenGL Function Loading:** GLAD
+-   **GUI:** ImGui
+-   **Build System:** CMake
 
------
+## Setup
 
-## Technology Stack
-
-  * **Language:** C++
-  * **Graphics API:** OpenGL (with compute shaders)
-  * **OpenGL Loader:** `glad` (as a submodule)
-  * **Algorithms:** Marching Cubes, Perlin Noise
-  * **Shading:** GLSL (Vertex, Fragment, and Compute Shaders)
-
------
-
-## Building the Project
+ImGui and GLAD are included as Git submodules.
 
 ```bash
-git clone --recursive https://github.com/NamitBhutani/procLan.git
-cd procLan
+git clone --recursive https://github.com/NamitBhutani/procLan
+```
 
-mkdir build
-cd build
+CMake is used to manage the build process.
+
+```bash
+mkdir -p build && cd build
 cmake ..
-make
+cmake --build .
+./marchingcubes
 ```
