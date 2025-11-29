@@ -455,6 +455,104 @@
 						compute shader to determine cube corner signs/isosurface
 						intersections.
 					</p>
+
+					<h3>Noise Types Used</h3>
+					<p>
+						We utilize multiple noise types, each serving a specific purpose in the terrain and cave generation pipeline:
+					</p>
+					<table>
+						<caption>
+							Noise Functions and Their Roles
+						</caption>
+						<thead>
+							<tr>
+								<th>Noise Type</th>
+								<th>Configuration</th>
+								<th>Purpose</th>
+								<th>Why This Noise</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><strong>Domain Warp Noise</strong></td>
+								<td>
+									OpenSimplex2<br>
+									<code>frequency: 0.005</code><br>
+									<code>warp_amp: 5.0</code>
+								</td>
+								<td>
+									Distorts the sampling coordinates before any other noise is applied, creating twisted, organic-looking terrain features.
+								</td>
+								<td>
+									OpenSimplex2 provides smooth, artifact-free warping. Low frequency ensures large-scale distortions rather than chaotic noise. The amplitude controls how far points are displaced from their original positions.
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Terrain Height Noise</strong></td>
+								<td>
+									OpenSimplex2 + FBM<br>
+									<code>frequency: 0.01</code><br>
+									<code>octaves: 4</code>
+								</td>
+								<td>
+									Generates the base terrain heightfield. The density is computed as <code>terrainHeight - worldPos.y</code>, creating the solid ground.
+								</td>
+								<td>
+									<strong>Fractal Brownian Motion (FBM)</strong> layers multiple octaves of noise at increasing frequencies and decreasing amplitudes. This produces natural-looking terrain with both large hills and small surface detail—mimicking how real landscapes form through processes at different scales.
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Cave Carving Noise</strong></td>
+								<td>
+									OpenSimplex2 + Ridged Multifractal<br>
+									<code>frequency: u_CaveFrequencies[i]</code><br>
+									<code>octaves: 2</code>
+								</td>
+								<td>
+									Carves tunnels and hollow regions into the terrain. Each cave layer can have unique offset, gain, and frequency parameters.
+								</td>
+								<td>
+									<strong>Ridged Multifractal</strong> noise creates sharp ridges and valleys by taking the absolute value of noise and inverting it. For caves, this produces winding tunnel-like structures with defined edges—perfect for cavern systems. The ridges naturally form interconnected passages rather than isolated voids.
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Cave Zone Noise</strong></td>
+								<td>
+									OpenSimplex2 + FBM<br>
+									<code>frequency: u_CaveZoneFrequencies[i]</code><br>
+									<code>octaves: 2</code>
+								</td>
+								<td>
+									Controls <em>where</em> caves appear by creating a mask. Only regions where the zone noise exceeds the threshold will have caves carved into them.
+								</td>
+								<td>
+									Using a low-frequency FBM noise for zoning creates natural clustering of caves—some areas are cave-rich while others are solid rock. This prevents caves from appearing uniformly everywhere and creates more realistic cave distribution with distinct "cave regions."
+								</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h4>Why OpenSimplex2?</h4>
+					<p>
+						All noise types use <strong>OpenSimplex2</strong> as the base algorithm because:
+					</p>
+					<ul>
+						<li><strong>No visible grid artifacts:</strong> Unlike Perlin noise, OpenSimplex2 doesn't exhibit directional bias along axes.</li>
+						<li><strong>Smooth gradients:</strong> Produces continuous, organic-looking results ideal for terrain.</li>
+						<li><strong>GPU efficiency:</strong> The FastNoiseLite implementation is optimized for parallel execution on compute shaders.</li>
+						<li><strong>3D coherence:</strong> Works well in volumetric applications where we need consistent density values in all directions.</li>
+					</ul>
+
+					<h4>How Noises Combine</h4>
+					<p>
+						The final density at each voxel is computed by composing these noise functions:
+					</p>
+					<ol>
+						<li><strong>Domain warping</strong> distorts the world position to create organic flow.</li>
+						<li><strong>Terrain noise</strong> establishes the base ground level using the warped coordinates.</li>
+						<li><strong>Cave noises</strong> (with zone masking and height ceilings) are blended using <code>smin()</code>—a smooth minimum function that creates seamless transitions between terrain and carved caves.</li>
+						<li><strong>Boundary conditions</strong> enforce bedrock at the bottom and walls around the edges.</li>
+					</ol>
 					<ul>
 						<li>
 							<strong>Seed & determinism:</strong> A uniform seed

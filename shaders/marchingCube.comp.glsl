@@ -57,7 +57,7 @@ vec3 computeNormal(int x, int y, int z) {
     float dY = getDensity(x, y - 1, z) - getDensity(x, y + 1, z);
     float dZ = getDensity(x, y, z - 1) - getDensity(x, y, z + 1);
     vec3 n = vec3(dX, dY, dZ);
-    
+
     if (length(n) < 0.0001) {
         return vec3(0.0, 1.0, 0.0);
     }
@@ -68,10 +68,10 @@ vec3 interpolateNormal(vec3 normal0, vec3 normal1, float val0, float val1) {
     if(abs(isoLevel - val0) < 0.00001) return normal0;
     if(abs(isoLevel - val1) < 0.00001) return normal1;
     if(abs(val0 - val1) < 0.00001) return normal0;
-    
+
     float t = (isoLevel - val0) / (val1 - val0);
     vec3 n = mix(normal0, normal1, t);
-    
+
     if (length(n) < 0.0001) {
         return normal0;
     }
@@ -106,7 +106,7 @@ void main() {
 
     if(edgeTable[cubeIndex] == 0) return;
 
-    vec3 basePos = vec3(pos) - vec3(1.0); 
+    vec3 basePos = vec3(pos) - vec3(1.0);
 
     vec3 p0 = basePos + vec3(0, 0, 0);
     vec3 p1 = basePos + vec3(1, 0, 0);
@@ -182,7 +182,7 @@ void main() {
         int triIndex2 = triTable[baseIndex + i + 2];
 
         uint startIndex = atomicAdd(vertexCounter, 3);
-        
+
         vertexNormals[startIndex].position = vec4(edgeVerts[triIndex0], 1.0);
         vertexNormals[startIndex].normal = edgeNormals[triIndex0];
         vertexNormals[startIndex].pad = 0.0;
